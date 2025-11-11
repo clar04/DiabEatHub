@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* ---------- THEME EXTENSION ---------- */
+@theme {
+  --color-brand-900: #4F7F74;
+  --color-brand-800: #45736A;
+  --color-brand-700: #3D6A61;
+
+  --color-surface: #F1F5D8;
+  --color-surface-100: #EEF3D2;
+  --color-surface-200: #E6EEBD;
+
+  --color-line-200: #CBD89A;
+
+  --color-ink-900: #0F1B16;
+  --color-ink-700: #24453D;
+
+  --color-accent-500: #B9D67A;
+  --color-accent-600: #A6C65E;
+
+  --shadow-soft: 0 10px 30px -12px rgba(2, 6, 23, 0.18);
+}
+
+/* ---------- BASE LAYER ---------- */
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  @apply bg-brand-900 text-slate-100 antialiased;
+}
+
+/* ---------- CUSTOM UTILITIES ---------- */
+
+/* Kartu krem lembut */
+@utility card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line-200);
+  border-radius: 1rem; /* 2xl */
+  box-shadow: var(--shadow-soft);
+}
+
+/* Input krem lembut */
+@utility field {
+  background-color: var(--color-surface-100);
+  border: 1px solid var(--color-line-200);
+  border-radius: 0.75rem; /* xl */
+  color: var(--color-ink-900);
+}
+
+/* Efek ring radial di hero */
+@utility ring-spot {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(241, 245, 216, 0.15),
+    transparent 60%
+  );
+}
