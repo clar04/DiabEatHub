@@ -7,22 +7,22 @@ A diabetes-friendly food & recipe finder that aggregates data from **Nutritionix
 
 ## Features
 
-### 1. Food Check (Nutritionix)
+### 1. Food Check 
 - Search everyday foods (e.g. `fried rice`, `sweet iced tea`, `chicken satay`).
 - Fetches nutrition from **Nutritionix**.
 - Shows carbs, sugar, serving size.
 - Applies diabetes rule:
   - Sugar > 10 g → **High Sugar** 🔴
-  - Carbs > 40 g → **Watch Carbs** 🟡
+  - Carbs > 25  g → **Watch Carbs** 🟡
   - Otherwise → **OK** 🟢
 
-### 2. Diabetes-Friendly Recipes (Spoonacular)
+### 2. Diabetes-Friendly Recipes 
 - Fetches recipes from **Spoonacular Food API**.
 - Filters for low-carb / low-sugar style recipes.
 - Displays per-serving carbs & sugar, cook time.
 - Marks safe ones with **Diabetes-Friendly** badge.
 
-### 3. Packaged Product Checker (Open Food Facts)
+### 3. Packaged Product Checker 
 - Search packaged foods/drinks.
 - Fetches nutrition from **Open Food Facts**.
 - Highlights sugars per 100g and scans ingredients for sweeteners (e.g. `sugar`, `glucose syrup`, `fructose`).
@@ -42,7 +42,7 @@ A diabetes-friendly food & recipe finder that aggregates data from **Nutritionix
 - **Frontend**: React + Tailwind CSS 
 - **Backend**: Laravel
 - **Data Sources**:
-  - [Nutritionix API](https://www.nutritionix.com/api)
+  - [API Ninjas](https://www.api-ninjas.com/)
   - [Spoonacular Food API](https://spoonacular.com/food-api)
   - [Open Food Facts](https://world.openfoodfacts.org/data)
 
