@@ -48,7 +48,7 @@ A diabetes-friendly food & recipe finder that aggregates data from **Nutritionix
 
 ---
 
-## Project Structure
+<!-- ## Project Structure
 
 ```text
 diabeat-hub/
@@ -178,4 +178,4 @@ GET /api/products/search?q={query}
 ```
 
 ---
-
+ -->
