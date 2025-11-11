@@ -2,3 +2,5 @@ stacks.md
 /backend/venv
 .env
 package.json
+/__pycache__
+*.pyc

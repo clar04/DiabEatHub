@@ -1,7 +1,0 @@
-fastapi
-uvicorn[standard]
-google-generativeai
-python-dotenv
-youtube-transcript-api
-python-docx
-reportlab
