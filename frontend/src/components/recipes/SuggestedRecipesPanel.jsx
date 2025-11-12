@@ -1,199 +1,237 @@
-// src/components/recipes/SuggestedRecipesPanel.jsx
 import { useMemo, useState } from "react";
 import Card from "../ui/Card";
-import Input from "../ui/Input";
 import Label from "../ui/Label";
+import Input from "../ui/Input";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
+import RecipeModal from "./RecipeModal";
 
-/* -------- MOCK DATA (bisa diganti API: Spoonacular / Edamam) -------- */
+/* ---------- DUMMY RECIPE DB ---------- */
 const RECIPES = [
   {
-    id: "r1",
+    id: "veg-bowl",
     title: "Chicken Veggie Bowl",
-    time: 25,
+    tags: ["Diabetes-Friendly", "low sugar", "high protein"],
+    cookMin: 25,
+    servings: 2,
     kcal: 410,
-    carbs: 32,
+    carb: 32,
     sugar: 6,
-    fat: 15,
     protein: 36,
-    ingredients: ["ayam", "brokoli", "wortel", "nasi", "bawang putih", "minyak zaitun"],
+    fat: 15,
+    ingredients: [
+      "200 g dada ayam, potong dadu",
+      "1 sdm minyak zaitun",
+      "1 porsi nasi (100 g) / quinoa",
+      "1 wortel, iris",
+      "100 g brokoli",
+      "1 siung bawang putih",
+      "Garam, lada",
+    ],
+    steps: [
+      "Tumis bawang putih dengan minyak hingga harum.",
+      "Masukkan ayam, bumbui garam & lada; masak hingga matang.",
+      "Tambahkan wortel & brokoli, tumis 2–3 menit.",
+      "Sajikan di atas nasi/quinoa.",
+    ],
+    notes: "Untuk karbo lebih rendah, ganti nasi dengan cauliflower rice.",
   },
   {
-    id: "r2",
+    id: "greek-salad-tuna",
     title: "Greek Salad with Tuna",
-    time: 15,
+    tags: ["Diabetes-Friendly", "low carb"],
+    cookMin: 15,
+    servings: 2,
     kcal: 320,
-    carbs: 18,
+    carb: 18,
     sugar: 7,
-    fat: 17,
     protein: 26,
-    ingredients: ["tuna", "timun", "tomat", "zaitun", "keju feta", "selada", "minyak zaitun"],
+    fat: 17,
+    ingredients: [
+      "1 kaleng tuna (air), tiriskan",
+      "1 buah timun, potong dadu",
+      "8 buah tomat cherry",
+      "1/2 bawang merah, iris tipis",
+      "30 g keju feta (opsional)",
+      "1 sdm olive oil, 1 sdt air jeruk lemon",
+      "Sejumput garam & lada",
+    ],
+    steps: [
+      "Campur semua bahan di mangkuk besar.",
+      "Beri olive oil, perasan lemon, garam & lada; aduk rata.",
+    ],
   },
   {
-    id: "r3",
+    id: "tofu-greenbeans",
     title: "Stir-fry Tofu & Green Beans",
-    time: 20,
+    tags: ["Diabetes-Friendly", "plant-based"],
+    cookMin: 20,
+    servings: 2,
     kcal: 350,
-    carbs: 28,
+    carb: 28,
     sugar: 8,
-    fat: 18,
     protein: 22,
-    ingredients: ["tahu", "buncis", "saus tiram low sugar", "bawang putih", "minyak"],
+    fat: 18,
+    ingredients: [
+      "250 g tahu, potong dadu",
+      "150 g buncis, potong 3 cm",
+      "1 siung bawang putih",
+      "1 sdm minyak",
+      "1 sdm saus tiram low-sugar / light soy",
+    ],
+    steps: [
+      "Tumis bawang putih, masukkan tahu hingga kecokelatan.",
+      "Tambahkan buncis & saus; tumis sampai buncis empuk renyah.",
+    ],
   },
   {
-    id: "r4",
+    id: "oat-parfait",
     title: "Oat Yogurt Parfait",
-    time: 10,
+    tags: ["Perhatikan gula/karbo"],
+    cookMin: 10,
+    servings: 1,
     kcal: 290,
-    carbs: 44,
+    carb: 44,
     sugar: 14,
-    fat: 7,
     protein: 14,
-    ingredients: ["oat", "yogurt plain", "stroberi", "madu"],
+    fat: 7,
+    ingredients: [
+      "40 g oat",
+      "150 g yogurt plain",
+      "Strawberry/blueberry secukupnya",
+      "1 sdt madu (opsional)",
+    ],
+    steps: [
+      "Susun oat, yogurt, dan buah dalam gelas.",
+      "Tambahkan madu bila perlu (opsional).",
+    ],
+    notes: "Gunakan yogurt plain untuk menekan gula.",
   },
   {
-    id: "r5",
+    id: "shrimp-zoodle",
     title: "Spicy Shrimp Zoodle",
-    time: 18,
+    tags: ["Diabetes-Friendly", "low carb", "high protein"],
+    cookMin: 18,
+    servings: 2,
     kcal: 330,
-    carbs: 22,
+    carb: 22,
     sugar: 5,
-    fat: 12,
     protein: 28,
-    ingredients: ["udang", "zucchini", "cabai", "bawang putih", "minyak zaitun", "jeruk nipis"],
+    fat: 12,
+    ingredients: [
+      "200 g udang kupas",
+      "2 buah zucchini, spiral (zoodle)",
+      "1 siung bawang putih, cincang",
+      "1 sdt cabai bubuk",
+      "1 sdm olive oil, garam, lada",
+      "Air jeruk nipis sedikit",
+    ],
+    steps: [
+      "Tumis bawang putih & cabai dengan olive oil.",
+      "Masukkan udang hingga berubah warna.",
+      "Tambahkan zoodle, aduk cepat 1–2 menit. Bumbui garam & lada.",
+      "Angkat, beri perasan jeruk nipis.",
+    ],
   },
 ];
 
-function diabetesFriendly(r) {
-  // aturan sederhana; ubah sesuka kamu
-  return r.carbs <= 40 && r.sugar <= 10;
-}
-
-function Stat({ label, value }) {
-  return (
-    <div className="rounded-xl bg-surface-100 border border-line-200 px-3 py-2 text-center">
-      <p className="text-xs text-ink-700">{label}</p>
-      <p className="font-semibold text-ink-900">{value}</p>
-    </div>
-  );
-}
-
+/* ---------- Panel ---------- */
 export default function SuggestedRecipesPanel() {
   const [q, setQ] = useState("");
+  const [selected, setSelected] = useState(null);
 
-  const { results, chips } = useMemo(() => {
-    const raw = q.trim().toLowerCase();
-    const wantsLowCarb = raw.includes("low carb");
-    const wantsLowSugar = raw.includes("low sugar");
-
-    // ekstrak bahan (pisahkan dengan koma)
-    const tokens = raw
-      .replace(/low carb|low sugar/g, "")
-      .split(/[,\s]+/)
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    const matchIngredient = (recipe) =>
-      tokens.length === 0 || tokens.every((t) => recipe.ingredients.some((ing) => ing.includes(t)));
-
-    const matchTitle = (recipe) => raw && recipe.title.toLowerCase().includes(raw);
-
-    const filtered = RECIPES.filter((r) => {
-      // filter oleh low carb/sugar jika diminta
-      if (wantsLowCarb && r.carbs > 40) return false;
-      if (wantsLowSugar && r.sugar > 10) return false;
-
-      // cocokkan bahan ATAU judul; kalau input kosong, tampilkan semua
-      if (raw.length === 0) return true;
-      return matchIngredient(r) || matchTitle(r);
-    });
-
-    const chips = [];
-    if (wantsLowCarb) chips.push("Low carb");
-    if (wantsLowSugar) chips.push("Low sugar");
-    tokens.forEach((t) => chips.push(t));
-
-    return { results: filtered, chips };
+  const list = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    if (!s) return RECIPES;
+    return RECIPES.filter(
+      (r) =>
+        r.title.toLowerCase().includes(s) ||
+        r.tags.some((t) => t.toLowerCase().includes(s)) ||
+        r.ingredients.some((ing) => ing.toLowerCase().includes(s))
+    );
   }, [q]);
 
   return (
-    <Card className="p-5">
-      <div className="flex flex-col sm:flex-row sm:items-end gap-3">
-        <div className="flex-1">
-          <Label htmlFor="srch" className="text-ink-900">Cari resep</Label>
-          <Input
-            id="srch"
-            placeholder="contoh: low carb, low sugar, atau bahan: ayam, brokoli"
-            className="mt-1"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          {chips.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {chips.map((c, i) => (
-                <span key={i} className="rounded-full bg-surface-100 border border-line-200 px-2.5 py-1 text-xs text-ink-700">
-                  {c}
-                </span>
-              ))}
-            </div>
-          )}
+    <>
+      {/* Search bar */}
+      <Card className="p-5">
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
+            <Label className="text-ink-900">Cari resep</Label>
+            <Input
+              placeholder="contoh: low carb, low sugar, atau bahan: ayam, brokoli"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && setQ((v) => v)}
+              className="mt-1"
+            />
+          </div>
+          <Button onClick={() => setQ((v) => v)}>Tampilkan</Button>
         </div>
-        <Button variant="soft" type="button" onClick={() => { /* no-op; live filter */ }}>
-          Tampilkan
-        </Button>
-      </div>
+      </Card>
 
-      {/* Results */}
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {results.map((r) => (
-          <div key={r.id} className="rounded-2xl border border-line-200 p-4 bg-surface-100 text-ink-900">
-            <div className="flex items-start justify-between gap-3">
+      {/* Cards */}
+      <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {list.map((r) => (
+          <Card key={r.id} className="p-5">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="font-semibold">{r.title}</p>
-                <p className="text-xs text-ink-700">Cook: {r.time} min</p>
+                <p className="font-semibold text-ink-900">{r.title}</p>
+                <p className="text-xs text-ink-700">Cook: {r.cookMin} min</p>
               </div>
-              {diabetesFriendly(r) ? (
-                <Badge tone="green">Diabetes-Friendly</Badge>
-              ) : (
-                <Badge tone="yellow">Perhatikan gula/karbo</Badge>
+              {r.tags?.[0] && (
+                <Badge tone={r.tags[0].includes("Perhatikan") ? "yellow" : "green"}>
+                  {r.tags[0]}
+                </Badge>
               )}
             </div>
 
-            <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
-              <Stat label="Kcal" value={`${r.kcal} kcal`} />
-              <Stat label="Carbs" value={`${r.carbs} g`} />
-              <Stat label="Sugar" value={`${r.sugar} g`} />
-              <Stat label="Protein" value={`${r.protein} g`} />
-              <Stat label="Fat" value={`${r.fat} g`} />
+            {/* macros */}
+            <div className="mt-3 grid grid-cols-4 gap-3 text-sm">
+              <Macro label="Kcal" value={`${r.kcal} kcal`} />
+              <Macro label="Carbs" value={`${r.carb} g`} />
+              <Macro label="Sugar" value={`${r.sugar} g`} />
+              <Macro label="Protein" value={`${r.protein} g`} />
+              <Macro label="Fat" value={`${r.fat} g`} />
             </div>
 
+            {/* tags ingredients */}
             <div className="mt-3">
-              <p className="text-xs font-medium text-ink-700">Ingredients</p>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {r.ingredients.map((ing, i) => (
-                  <span key={i} className="rounded-lg bg-surface border border-line-200 px-2 py-0.5 text-xs text-ink-700">
-                    {ing}
+              <p className="text-xs text-ink-700 mb-1">Ingredients</p>
+              <div className="flex flex-wrap gap-2">
+                {r.ingredients.slice(0, 8).map((x, i) => (
+                  <span
+                    key={i}
+                    className="rounded-full border border-line-200 bg-surface-100 px-2.5 py-1 text-xs text-ink-700"
+                  >
+                    {x}
                   </span>
                 ))}
               </div>
             </div>
 
-            {/* placeholder untuk aksi lanjutan (lihat detail / simpan) */}
-            <div className="mt-3 flex gap-2">
-              <Button variant="soft" className="px-3 py-1 text-xs">Lihat detail</Button>
-              <Button className="px-3 py-1 text-xs">Simpan</Button>
+            {/* actions */}
+            <div className="mt-4 flex gap-2">
+              <Button variant="soft" onClick={() => setSelected(r)}>
+                Lihat detail
+              </Button>
+              <Button variant="soft">Simpan</Button>
             </div>
-          </div>
+          </Card>
         ))}
-
-        {results.length === 0 && (
-          <div className="sm:col-span-2 text-sm text-ink-700">
-            Ketik <span className="font-medium">low carb</span>, <span className="font-medium">low sugar</span>,
-            atau bahan (pisahkan dengan koma) — misal: <em>ayam, brokoli</em>.
-          </div>
-        )}
       </div>
-    </Card>
+
+      {/* Modal detail */}
+      <RecipeModal recipe={selected} onClose={() => setSelected(null)} />
+    </>
+  );
+}
+
+function Macro({ label, value }) {
+  return (
+    <div className="rounded-xl border border-line-200 bg-surface-100 p-3 text-center">
+      <p className="text-xs text-ink-700">{label}</p>
+      <p className="font-semibold text-ink-900">{value}</p>
+    </div>
   );
 }

@@ -1,8 +1,8 @@
-// src/utils/foodLog.js
+// kunci penyimpanan
 const KEY = "smc_food_log_v1";
 
-// ambil seluruh log: { '2025-11-11': [ {id, name, qty, unit, nutr} ] , ... }
-export function readAllLogs() {
+/** ambil seluruh log (object) */
+function readAll() {
   try {
     const raw = localStorage.getItem(KEY);
     return raw ? JSON.parse(raw) : {};
@@ -11,27 +11,44 @@ export function readAllLogs() {
   }
 }
 
+/** simpan seluruh log */
+function writeAll(obj) {
+  localStorage.setItem(KEY, JSON.stringify(obj));
+}
+
+/** format YYYY-MM-DD */
+export function toDateKey(d = new Date()) {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+/** baca log per tanggal (array) */
 export function readLogByDate(dateKey) {
-  const all = readAllLogs();
+  const all = readAll();
   return Array.isArray(all[dateKey]) ? all[dateKey] : [];
 }
 
-export function saveLogByDate(dateKey, items) {
-  const all = readAllLogs();
-  all[dateKey] = items;
-  localStorage.setItem(KEY, JSON.stringify(all));
+/** tambah item ke log tanggal tsb */
+export function addToLog(dateKey, item) {
+  const all = readAll();
+  if (!Array.isArray(all[dateKey])) all[dateKey] = [];
+  // item minimal: { id?, name, nutr: { kcal, protein, fat, carb, sugar, sodium? } }
+  all[dateKey].push(item);
+  writeAll(all);
 }
 
-export function addItemToDate(dateKey, item) {
-  const items = readLogByDate(dateKey);
-  const withId = { id: crypto.randomUUID(), ...item };
-  const updated = [withId, ...items];
-  saveLogByDate(dateKey, updated);
-  return updated;
+/** hapus satu item by index */
+export function removeFromLog(dateKey, index) {
+  const all = readAll();
+  if (!Array.isArray(all[dateKey])) return;
+  all[dateKey].splice(index, 1);
+  writeAll(all);
 }
 
-export function removeItem(dateKey, id) {
-  const items = readLogByDate(dateKey).filter((it) => it.id !== id);
-  saveLogByDate(dateKey, items);
-  return items;
+/** hapus semua pada dateKey */
+export function clearLog(dateKey) {
+  const all = readAll();
+  delete all[dateKey];
+  writeAll(all);
 }
