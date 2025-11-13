@@ -4,3 +4,4 @@ stacks.md
 package.json
 /__pycache__
 *.pyc
+/vendor

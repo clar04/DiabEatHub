@@ -67,7 +67,6 @@ class RecipeController extends Controller
     {
         $cacheKey = "recipe_detail:{$id}";
 
-        // simpan 30 menit supaya nggak nembak Spoonacular terus
         $data = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($id) {
             return $this->spoonacular->getRecipeDetail($id);
         });
@@ -79,7 +78,6 @@ class RecipeController extends Controller
             ], 502);
         }
 
-        // ambil nutrisi karbo & gula kalau ada
         $carbs = 0;
         $sugar = 0;
 
@@ -94,20 +92,18 @@ class RecipeController extends Controller
             }
         }
 
-        // jalankan rules ke versi ringkas
         $evaluated = $this->rules->evaluate([
             'name'    => $data['title'] ?? "Recipe #{$id}",
             'carbs_g' => $carbs,
             'sugar_g' => $sugar,
             'source'  => 'spoonacular',
+            'extendedIngredients'=> $data['extendedIngredients'] ?? null,
         ]);
 
         return response()->json([
             'success' => true,
             'item' => [
-                // ini buat badge / status
                 'diabetes' => $evaluated,
-                // ini resep full buat ditampilin FE
                 'raw' => $data,
             ],
         ]);

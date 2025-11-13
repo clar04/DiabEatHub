@@ -1,0 +1,191 @@
+openapi: 3.0.3
+info:
+  title: DiabEat Backend API
+  version: 1.0.0
+  description: API for checking foods, packaged products, and diabetes-friendly recipes.
+servers:
+  - url: http://localhost:8000/api
+paths:
+  /food/check:
+    get:
+      summary: Check nutrition and diabetes status for a food
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+          description: Food name to search (e.g. "rice", "fried rice")
+      responses:
+        '200':
+          description: Food nutrition and diabetes evaluation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FoodItem'
+        '422':
+          description: Validation error
+  /history/food:
+    get:
+      summary: Get recent food checks
+      responses:
+        '200':
+          description: List of recent food checks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FoodHistory'
+  /products/search:
+    get:
+      summary: Search packaged products and evaluate for diabetes
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+          description: Product name (e.g. "yogurt", "chocolate")
+      responses:
+        '200':
+          description: Product list with diabetes evaluation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductItem'
+        '422':
+          description: Validation error
+  /recipes/diabetes:
+    get:
+      summary: Get diabetes-friendly recipe candidates from Spoonacular
+      parameters:
+        - in: query
+          name: maxCarbs
+          required: false
+          schema:
+            type: integer
+            default: 30
+          description: Max carbs to pass to Spoonacular search
+      responses:
+        '200':
+          description: List of recipes with diabetes flags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecipeListItem'
+  /recipes/{id}:
+    get:
+      summary: Get detailed recipe info by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Spoonacular recipe ID
+      responses:
+        '200':
+          description: Recipe detail with diabetes evaluation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  item:
+                    type: object
+                    properties:
+                      diabetes:
+                        $ref: '#/components/schemas/DiabetesEval'
+                      raw:
+                        type: object
+                        description: Raw recipe payload from Spoonacular
+        '502':
+          description: Failed to fetch from Spoonacular
+# components:
+#   schemas:
+#     DiabetesEval:
+#       type: object
+#       properties:
+#         name:
+#           type: string
+#         carbs_g:
+#           type: number
+#         sugar_g:
+#           type: number
+#         source:
+#           type: string
+#         diabetes_flag:
+#           type: string
+#           enum: [OK, Watch Carbs, High Sugar]
+#         notes:
+#           type: string
+#     FoodItem:
+#       allOf:
+#         - $ref: '#/components/schemas/DiabetesEval'
+#         - type: object
+#           properties:
+#             serving:
+#               type: string
+#     FoodHistory:
+#       type: object
+#       properties:
+#         id:
+#           type: integer
+#         query:
+#           type: string
+#         result:
+#           $ref: '#/components/schemas/FoodItem'
+#         created_at:
+#           type: string
+#           format: date-time
+#     ProductItem:
+#       allOf:
+#         - $ref: '#/components/schemas/DiabetesEval'
+#         - type: object
+#           properties:
+#             serving:
+#               type: string
+#             ingredients:
+#               type: string
+#     RecipeListItem:
+#       allOf:
+#         - $ref: '#/components/schemas/DiabetesEval'
+#         - type: object
+#           properties:
+#             ready_in_min:
+#               type: integer
+#               nullable: true
+#             diabetes_friendly:
+#               type: boolean
+#             raw:
+#               type: object
+#               description: Raw recipe object from Spoonacular
