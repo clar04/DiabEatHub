@@ -75,10 +75,10 @@ export default function Home() {
                 value={settings.activity}
                 onChange={(e) => setSettings((s) => ({ ...s, activity: e.target.value }))}
               >
-                <option value="sedentary">Sedentary (1–2k langkah)</option>
-                <option value="light">Light (jalan santai 2–3×/mgg)</option>
-                <option value="moderate">Moderate (3–5× olahraga)</option>
-                <option value="active">Active (6–7× olahraga)</option>
+                <option value="sedentary">Sedentary (1–2k langkah/hari)</option>
+                <option value="light">Light (jalan santai 2–3×/minggu)</option>
+                <option value="moderate">Moderate (3–5× olahraga/minggu)</option>
+                <option value="active">Active (6–7× olahraga/minggu)</option>
               </select>
             </div>
 

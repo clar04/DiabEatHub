@@ -4,37 +4,13 @@ import Label from "../ui/Label";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
-import { addToLog, readLogByDate, removeFromLog, toDateKey } from "../../utils/foodLog";
-
-// ---------- MOCK DATA (tanpa API key). Bisa diganti Nutritionix/Open Food Facts ----------
-const MOCK = [
-  {
-    name: "Nasi Goreng",
-    unit: "porsi (200 g)",
-    nutr: { kcal: 420, protein: 10, fat: 15, carb: 55, sugar: 5, sodium: 700 },
-  },
-  {
-    name: "Es Teh Manis",
-    unit: "gelas (240 ml)",
-    nutr: { kcal: 110, protein: 0, fat: 0, carb: 28, sugar: 25, sodium: 5 },
-  },
-  {
-    name: "Sate Ayam",
-    unit: "10 tusuk (150 g)",
-    nutr: { kcal: 350, protein: 28, fat: 20, carb: 10, sugar: 6, sodium: 550 },
-  },
-  {
-    name: "Gado-gado",
-    unit: "porsi (300 g)",
-    nutr: { kcal: 390, protein: 17, fat: 21, carb: 34, sugar: 9, sodium: 640 },
-  },
-];
-
-function searchFoods(q) {
-  const s = q.trim().toLowerCase();
-  if (!s) return [];
-  return MOCK.filter((x) => x.name.toLowerCase().includes(s));
-}
+import {
+  addToLog,
+  readLogByDate,
+  removeFromLog,
+  toDateKey,
+} from "../../utils/foodLog";
+import { checkFoodNutritionix } from "../../utils/api";
 
 function StatTile({ label, value }) {
   return (
@@ -47,26 +23,44 @@ function StatTile({ label, value }) {
 
 export default function FoodCheckPanel() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
   const [dateKey, setDateKey] = useState(toDateKey());
+
+  const [results, setResults] = useState([]);
   const [log, setLog] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
 
   // load log saat tanggal berubah
   useEffect(() => {
     setLog(readLogByDate(dateKey));
   }, [dateKey]);
 
-  function doSearch() {
-    setResults(searchFoods(query));
+  async function doSearch() {
+    if (!query.trim()) return;
+    setLoading(true);
+    setErr("");
+    setResults([]);
+
+    try {
+      const foods = await checkFoodNutritionix(query);
+      setResults(foods);
+      if (!foods.length) {
+        setErr("Makanan tidak ditemukan di Nutritionix.");
+      }
+    } catch (e) {
+      setErr(e.message || "Gagal mengambil data dari Nutritionix.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleAdd(item) {
     addToLog(dateKey, {
       name: item.name,
-      unit: item.unit,
+      unit: item.serving,
       nutr: item.nutr,
     });
-    setLog(readLogByDate(dateKey)); // refresh list
+    setLog(readLogByDate(dateKey));
   }
 
   function handleRemove(idx) {
@@ -76,7 +70,6 @@ export default function FoodCheckPanel() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Search & Result Panel */}
       <Card className="p-5">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
@@ -86,16 +79,17 @@ export default function FoodCheckPanel() {
             <div className="mt-1 flex gap-2">
               <Input
                 id="q"
-                placeholder="ketik nama menu: nasi goreng, es teh manis, dll"
+                placeholder="ketik nama menu: nasi goreng, sweet iced tea, dll"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && doSearch()}
               />
               <Button variant="soft" type="button" onClick={doSearch}>
-                Cari
+                Cek
               </Button>
             </div>
             <p className="mt-2 text-xs text-ink-700">
-              * Contoh demo tanpa API. Bisa disambungkan ke Nutritionix / Open Food Facts nanti.
+              Data diambil dari <span className="font-semibold">Nutritionix</span>.
             </p>
           </div>
 
@@ -111,53 +105,63 @@ export default function FoodCheckPanel() {
         </div>
 
         {/* Hasil pencarian */}
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          {results.map((r, idx) => (
-            <div
-              key={idx}
-              className="rounded-2xl border border-line-200 bg-surface-100 p-4"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-semibold text-ink-900">{r.name}</p>
-                  <p className="text-xs text-ink-700">Serving: {r.unit}</p>
-                </div>
-                <Badge
-                  tone={
-                    r.nutr.sugar > 10 ? "red" : r.nutr.carb > 40 ? "yellow" : "green"
-                  }
-                >
-                  {r.nutr.sugar > 10
-                    ? "High Sugar"
-                    : r.nutr.carb > 40
-                    ? "Watch Carbs"
-                    : "OK"}
-                </Badge>
-              </div>
-
-              <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
-                <StatTile label="Kals" value={`${r.nutr.kcal} kcal`} />
-                <StatTile label="Carb" value={`${r.nutr.carb} g`} />
-                <StatTile label="Sugar" value={`${r.nutr.sugar} g`} />
-                <StatTile label="Protein" value={`${r.nutr.protein} g`} />
-                <StatTile label="Fat" value={`${r.nutr.fat} g`} />
-                <StatTile label="Sodium" value={`${r.nutr.sodium} mg`} />
-              </div>
-
-              <div className="mt-3">
-                <Button variant="soft" onClick={() => handleAdd(r)}>
-                  + Add to log
-                </Button>
-              </div>
-            </div>
-          ))}
-
-          {results.length === 0 && (
-            <div className="sm:col-span-2 text-sm text-ink-700">
-              Ketik kata kunci lalu tekan{" "}
-              <span className="font-medium">Cari</span>. Hasil akan muncul di sini.
-            </div>
+        <div className="mt-5">
+          {loading && (
+            <p className="text-sm text-ink-700">Mengambil data dari Nutritionix…</p>
           )}
+          {err && !loading && (
+            <p className="text-sm text-red-600">Error: {err}</p>
+          )}
+
+          {!loading && !err && results.length === 0 && (
+            <p className="text-sm text-ink-700">
+              Ketik nama makanan lalu tekan <span className="font-medium">Cek</span>.
+            </p>
+          )}
+
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            {results.map((r, idx) => {
+              const sugar = r.nutr.sugar ?? 0;
+              const carb = r.nutr.carb ?? 0;
+              const tone = sugar > 10 ? "red" : carb > 40 ? "yellow" : "green";
+              const label =
+                sugar > 10 ? "High Sugar" : carb > 40 ? "Watch Carbs" : "OK";
+
+              return (
+                <div
+                  key={idx}
+                  className="rounded-2xl border border-line-200 bg-surface-100 p-4"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-ink-900">
+                        {r.name}
+                      </p>
+                      <p className="text-xs text-ink-700">
+                        Serving: {r.serving}
+                      </p>
+                    </div>
+                    <Badge tone={tone}>{label}</Badge>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                    <StatTile label="Kals" value={`${r.nutr.kcal} kcal`} />
+                    <StatTile label="Carb" value={`${r.nutr.carb} g`} />
+                    <StatTile label="Sugar" value={`${r.nutr.sugar} g`} />
+                    <StatTile label="Protein" value={`${r.nutr.protein} g`} />
+                    <StatTile label="Fat" value={`${r.nutr.fat} g`} />
+                    <StatTile label="Sodium" value={`${r.nutr.sodium} mg`} />
+                  </div>
+
+                  <div className="mt-3">
+                    <Button variant="soft" onClick={() => handleAdd(r)}>
+                      + Add to log
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Log list */}
@@ -177,7 +181,9 @@ export default function FoodCheckPanel() {
                   className="rounded-xl border border-line-200 bg-surface px-3 py-2 flex items-center justify-between gap-2"
                 >
                   <div className="min-w-0">
-                    <p className="text-ink-900 font-medium truncate">{it.name}</p>
+                    <p className="text-ink-900 font-medium truncate">
+                      {it.name}
+                    </p>
                     <p className="text-xs text-ink-700">
                       {it.unit} • {it.nutr.kcal} kcal
                     </p>

@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import App from "./App.jsx";
 
-// pages
 import Home from "./pages/Home.jsx";
 import Food from "./pages/Food.jsx";
 import Packaged from "./pages/Packaged.jsx";
@@ -12,9 +11,9 @@ import RecipeDetail from "./pages/RecipeDetail.jsx";
 import History from "./pages/History.jsx";
 import About from "./pages/About.jsx";
 import Profile from "./pages/Profile.jsx";
+import Login from "./pages/Login.jsx";          
 import ErrorPage from "./pages/ErrorPage.jsx";
 
-// contexts
 import { ProfileProvider } from "./state/ProfileContext.jsx";
 import { GoalProvider } from "./state/GoalContext.jsx";
 
@@ -27,6 +26,7 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { index: true, element: <Home /> },
+      { path: "login", element: <Login /> },     // <--- route halaman login
       { path: "food", element: <Food /> },
       { path: "products", element: <Packaged /> }, // path utama
       { path: "packaged", element: <Packaged /> }, // alias biar /packaged juga jalan

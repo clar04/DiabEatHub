@@ -1,95 +1,154 @@
-import { useProfile } from "../state/ProfileContext";
 import { useState } from "react";
 import Card from "../components/ui/Card";
-import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
+import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
+import { useProfile } from "../state/ProfileContext";
 
 export default function Profile() {
-  const { profile, setProfile } = useProfile();
-  const [form, setForm] = useState(profile || { sex: "male", age: "", height: "", weight: "" });
+  const { profile, updateProfile, resetProfile } = useProfile();
 
-  const handle = (key) => (e) => {
-    const value = e.target.type === "number" ? Number(e.target.value) : e.target.value;
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const [form, setForm] = useState({
+    username: profile?.username || "",
+    sex: profile?.sex || "female",
+    age: profile?.age || "",
+    height: profile?.height || "",
+    weight: profile?.weight || "",
+  });
+
+  const handleChange = (key) => (e) => {
+    setForm((s) => ({ ...s, [key]: e.target.value }));
   };
 
-  const handleSave = () => {
-    setProfile(form);
-    alert("Profil disimpan!");
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const cleaned = {
+      username: form.username.trim(),
+      sex: form.sex,
+      age: Number(form.age) || 0,
+      height: Number(form.height) || 0,
+      weight: Number(form.weight) || 0,
+    };
+    updateProfile(cleaned);
+    alert("Data profil tersimpan.");
+  };
+
+  const handleReset = () => {
+    if (!window.confirm("Hapus seluruh data login & profil?")) return;
+    resetProfile();
   };
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-10 sm:py-14">
-      <div className="w-full max-w-xl">
-        <Card className="p-8 text-ink-900">
-          <h2 className="text-lg font-semibold">Profile</h2>
-          <p className="mt-1 text-sm text-ink-700">
-            Lengkapi data berikut untuk akurasi perhitungan.
-          </p>
+    <section>
+      <h1 className="text-3xl sm:text-4xl font-semibold text-white">Profile</h1>
+      <p className="mt-2 text-sm text-surface-200">
+        Lengkapi data berikut untuk akurasi perhitungan kalori. Saat ini login-mu
+        tercatat sebagai{" "}
+        <span className="font-semibold">
+          {profile?.username || "(belum diisi)"}
+        </span>
+        .
+      </p>
 
-          <div className="mt-5 space-y-4">
-            {/* Jenis Kelamin */}
+      <Card className="mt-6 p-6 sm:p-7">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Username */}
+          <div>
+            <Label htmlFor="username" className="text-ink-900">
+              Nama / Username
+            </Label>
+            <Input
+              id="username"
+              className="mt-1 text-ink-900 placeholder:text-ink-600"
+              value={form.username}
+              onChange={handleChange("username")}
+              required
+            />
+          </div>
+
+          {/* Sex + age/height/weight */}
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label htmlFor="sex">Jenis kelamin</Label>
+              <Label htmlFor="sex" className="text-ink-900">
+                Jenis kelamin
+              </Label>
               <select
                 id="sex"
-                className="mt-1 w-full rounded-xl border border-line-200 bg-surface-100 px-3 py-2 text-sm"
                 value={form.sex}
-                onChange={handle("sex")}
+                onChange={handleChange("sex")}
+                className="mt-1 w-full rounded-xl border border-line-200 
+                           bg-surface-100 px-3 py-2 text-sm text-ink-900
+                           focus:outline-none focus:ring-4 focus:ring-brand-100 
+                           focus:border-brand-500"
               >
-                <option value="male">Laki-laki</option>
-                <option value="female">Perempuan</option>
+                <option className="text-ink-900" value="female">
+                  Perempuan
+                </option>
+                <option className="text-ink-900" value="male">
+                  Laki-laki
+                </option>
               </select>
             </div>
 
-            {/* Usia, Tinggi, Berat */}
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="age">Usia (tahun)</Label>
-                <Input
-                  id="age"
-                  type="number"
-                  className="mt-1"
-                  value={form.age}
-                  onChange={handle("age")}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="height">Tinggi (cm)</Label>
-                <Input
-                  id="height"
-                  type="number"
-                  className="mt-1"
-                  value={form.height}
-                  onChange={handle("height")}
-                />
-              </div>
+            <div>
+              <Label htmlFor="age" className="text-ink-900">
+                Usia (tahun)
+              </Label>
+              <Input
+                id="age"
+                type="number"
+                min="10"
+                className="mt-1 text-ink-900 placeholder:text-ink-600"
+                value={form.age}
+                onChange={handleChange("age")}
+                required
+              />
             </div>
 
             <div>
-              <Label htmlFor="weight">Berat (kg)</Label>
+              <Label htmlFor="height" className="text-ink-900">
+                Tinggi (cm)
+              </Label>
+              <Input
+                id="height"
+                type="number"
+                min="100"
+                className="mt-1 text-ink-900 placeholder:text-ink-600"
+                value={form.height}
+                onChange={handleChange("height")}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="weight" className="text-ink-900">
+                Berat (kg)
+              </Label>
               <Input
                 id="weight"
                 type="number"
-                className="mt-1"
+                min="20"
+                className="mt-1 text-ink-900 placeholder:text-ink-600"
                 value={form.weight}
-                onChange={handle("weight")}
+                onChange={handleChange("weight")}
+                required
               />
             </div>
           </div>
 
-          <div className="flex justify-end mt-6">
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button type="submit">Simpan</Button>
             <Button
-              onClick={handleSave}
-              className="rounded-xl bg-brand-700 text-white px-5 py-2 hover:bg-brand-800"
+              type="button"
+              variant="ghost"
+              className="bg-red-400 text-red-800 hover:bg-red-300"
+              onClick={handleReset}
             >
-              Simpan
+              Hapus data profil
             </Button>
           </div>
-        </Card>
-      </div>
-    </div>
+        </form>
+      </Card>
+    </section>
   );
 }

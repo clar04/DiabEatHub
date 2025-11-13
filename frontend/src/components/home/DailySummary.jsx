@@ -1,4 +1,3 @@
-// src/components/home/DailySummary.jsx
 import { useEffect, useMemo, useState } from "react";
 import Card from "../ui/Card";
 import Separator from "../ui/Separator";

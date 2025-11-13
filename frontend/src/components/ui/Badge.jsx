@@ -1,4 +1,3 @@
-// src/components/ui/Badge.jsx
 export default function Badge({ tone = "neutral", children }) {
   const map = {
     neutral: "bg-slate-100 text-slate-700 border-slate-200",

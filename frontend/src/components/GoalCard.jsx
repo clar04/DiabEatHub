@@ -4,7 +4,6 @@ import Label from "./ui/Label";
 import Input from "./ui/Input";
 import Separator from "./ui/Separator";
 
-/* ---------- Constants ---------- */
 const ACTIVITY = [
   { key: "sedentary", label: "Sedentary (1–2k langkah)", factor: 1.2 },
   { key: "light", label: "Light (jalan santai 2–3x/mgg)", factor: 1.375 },
@@ -20,7 +19,6 @@ const GOALS = [
   { key: "gain_std", label: "Muscle Gain (standar +300 kcal)" },
 ];
 
-/* ---------- Helpers ---------- */
 const toNum = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const clamp = (n, min, max) => (Number.isFinite(n) ? Math.min(Math.max(n, min), max) : min);
 const mifflinStJeor = ({ sex, weightKg, heightCm, age }) =>
@@ -67,7 +65,6 @@ function adjustCalories(tdee, goal) {
   }
 }
 
-/* ---------- Component ---------- */
 export default function GoalCard() {
   const [form, setForm] = useState(() => {
     const saved = localStorage.getItem("smc_goal_form");
@@ -117,7 +114,7 @@ export default function GoalCard() {
   return (
     <Card className="p-5">
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Kiri: judul + form */}
+     
         <div className="lg:col-span-2">
           <h2 className="text-base font-semibold text-ink-900">Your Goal</h2>
 
@@ -125,7 +122,6 @@ export default function GoalCard() {
             Ketahui kebutuhan kalori harian untuk menjaga tubuh tetap sehat.
           </p>
 
-          {/* Pemisah di antara dua paragraf */}
           <Separator className="my-3" />
 
           <p className="text-sm text-ink-700">

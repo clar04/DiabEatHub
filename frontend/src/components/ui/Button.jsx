@@ -1,5 +1,5 @@
 export default function Button({ variant = "soft", className = "", children, ...props }) {
-  // variant "soft": button krem seperti mockup
+
   const styles =
     variant === "soft"
       ? "bg-surface-100 border border-line-200 text-ink-900 hover:bg-surface-200"

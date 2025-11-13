@@ -1,12 +1,18 @@
 import { Link, useLocation } from "react-router-dom";
+import { useProfile } from "../state/ProfileContext";
+import { isProfileReady } from "../utils/ensureProfile";
 
 export default function Header() {
   const location = useLocation();
+  const { profile } = useProfile();
+  const ready = isProfileReady(profile);
 
   const navLinks = [
+    { to: "/about", label: "About" }, 
     { to: "/food", label: "Food Check" },
     { to: "/recipes", label: "Suggested Recipes" },
-    { to: "/packaged", label: "Packaged Product" },
+    { to: "/products", label: "Packaged Product" },
+    { to: "/history", label: "History" },
   ];
 
   return (
@@ -20,7 +26,7 @@ export default function Header() {
           <span className="font-semibold text-white">Meal Planner</span>
         </Link>
 
-        {/* Nav */}
+        {/* Nav – kalau belum login, boleh tetap ditampilkan atau bisa kamu hide */}
         <nav className="hidden md:flex items-center gap-6 text-sm">
           {navLinks.map(({ to, label }) => (
             <Link
@@ -38,12 +44,12 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Button Profile */}
+        {/* Button Login / Profile */}
         <Link
-          to="/profile"
+          to={ready ? "/profile" : "/login"}
           className="ml-4 rounded-xl bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 transition"
         >
-          Profile
+          {ready ? "Profile" : "Login"}
         </Link>
       </div>
     </header>

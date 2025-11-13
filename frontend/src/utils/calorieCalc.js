@@ -1,4 +1,3 @@
-// src/utils/calorieCalc.js
 export const ACTIVITY = [
   { key: "sedentary", label: "Sedentary (1–2k langkah)", factor: 1.2 },
   { key: "light", label: "Light (jalan santai 2–3x/mgg)", factor: 1.375 },
