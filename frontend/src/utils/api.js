@@ -1,12 +1,31 @@
-const NUTRITIONIX_APP_ID = import.meta.env.VITE_NUTRITIONIX_APP_ID;
-const NUTRITIONIX_API_KEY = import.meta.env.VITE_NUTRITIONIX_API_KEY;
-const SPOONACULAR_KEY = import.meta.env.VITE_SPOONACULAR_API_KEY;
-const OFF_BASE = import.meta.env.VITE_OFF_BASE_URL || "https://world.openfoodfacts.org";
+const token = localStorage.getItem('authToken');
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
-async function safeFetch(url, options = {}) {
+async function apiFetch(path, options = {}) {
   try {
-    const res = await fetch(url, options);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const headers = {
+      ...options.headers,
+      'Accept': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    };
+
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+    });
+
+    if (!res.ok) {
+      let detail = null;
+      try {
+        detail = await res.json();
+      } catch (_) {
+      }
+      const message = detail?.detail || `HTTP ${res.status}`;
+      throw new Error(message);
+    }
+
+    if (res.status === 204) return null; 
     return await res.json();
   } catch (err) {
     console.error("API Error:", err);
@@ -15,134 +34,273 @@ async function safeFetch(url, options = {}) {
 }
 
 /* ============================================
-   1) Nutritionix – Food Check
-   Mengembalikan ARRAY makanan
+   1) Food Check – /food/check
+   (nama fungsi tetap: checkFoodNutritionix)
 =============================================== */
 
+/**
+ * Cek makanan dari teks (misal: "rice", "1 bowl rice")
+ * Backend response:
+ * {
+ *   "success": true,
+ *   "items": [
+ *     {
+ *       "name": "rice",
+ *       "serving": "100 g",
+ *       "carbs_g": 28.4,
+ *       "sugar_g": 0.1,
+ *       "source": "api-ninjas",
+ *       "diabetes_flag": "Watch Carbs",
+ *       "notes": "Carbohydrates are high, control portion."
+ *     }
+ *   ]
+ * }
+ */
 export async function checkFoodNutritionix(query) {
-  const url = "https://trackapi.nutritionix.com/v2/natural/nutrients";
+  const json = await apiFetch(
+    `/food/check?query=${encodeURIComponent(query)}`,
+    {
+      method: "GET",
+    }
+  );
 
-  const body = { query };
+  if (!json?.success || !Array.isArray(json.items)) return [];
 
-  const json = await safeFetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-app-id": NUTRITIONIX_APP_ID,
-      "x-app-key": NUTRITIONIX_API_KEY,
-    },
-    body: JSON.stringify(body),
+  return json.items.map((item) => ({
+    name: item.name,
+    serving: item.serving,
+    carbs: item.carbs_g,
+    sugar: item.sugar_g,
+    diabetesFlag: item.diabetes_flag,
+    notes: item.notes,
+    source: item.source,
+    raw: item,
+  }));
+}
+
+/**
+ * History food – /history/food
+ * Backend response:
+ * {
+ *   "success": true,
+ *   "items": [
+ *     {
+ *       "id": 16,
+ *       "query": "rice",
+ *       "result": { ...food object... },
+ *       "created_at": "...",
+ *       "updated_at": "..."
+ *     },
+ *     ...
+ *   ]
+ * }
+ */
+export async function getFoodHistory() {
+  const json = await apiFetch("/history/food", {
+    method: "GET",
   });
 
-  if (!json.foods || json.foods.length === 0) return [];
+  if (!json?.success || !Array.isArray(json.items)) return [];
 
-  return json.foods.map((f) => ({
-    name: f.food_name,
-    serving: `${f.serving_qty} ${f.serving_unit}`,
-    nutr: {
-      kcal: Math.round(f.nf_calories || 0),
-      protein: Math.round(f.nf_protein || 0),
-      fat: Math.round(f.nf_total_fat || 0),
-      carb: Math.round(f.nf_total_carbohydrate || 0),
-      sugar: Math.round(f.nf_sugars || 0),
-      sodium: Math.round(f.nf_sodium || 0),
-    },
-    raw: f,
+  return json.items.map((h) => {
+    const r = h.result || {};
+    return {
+      id: h.id,
+      query: h.query,
+      createdAt: h.created_at,
+      updatedAt: h.updated_at,
+      // hasil cek makanan yang disimpan di history
+      result: {
+        name: r.name,
+        serving: r.serving,
+        carbs: r.carbs_g,
+        sugar: r.sugar_g,
+        diabetesFlag: r.diabetes_flag,
+        notes: r.notes,
+        source: r.source,
+        raw: r,
+      },
+      raw: h,
+    };
+  });
+}
+
+/* ============================================
+   2) Products – /products/search
+=============================================== */
+
+/**
+ * Cari produk makanan/minuman dari OpenFoodFacts (via backend)
+ *
+ * Backend response:
+ * {
+ *   "success": true,
+ *   "items": [
+ *     {
+ *       "name": "...",
+ *       "serving": "100 g",
+ *       "carbs_g": 4.9,
+ *       "sugar_g": 4.9,
+ *       "ingredients": "...",
+ *       "source": "openfoodfacts",
+ *       "diabetes_flag": "OK",
+ *       "notes": "..."
+ *     },
+ *     ...
+ *   ]
+ * }
+ */
+export async function searchProductsOFF(keyword) {
+  const json = await apiFetch(
+    `/products/search?q=${encodeURIComponent(keyword)}`,
+    {
+      method: "GET",
+    }
+  );
+
+  if (!json?.success || !Array.isArray(json.items)) return [];
+
+  return json.items.map((item) => ({
+    name: item.name,
+    serving: item.serving,
+    carbs: item.carbs_g,
+    sugar: item.sugar_g,
+    ingredients: item.ingredients,
+    diabetesFlag: item.diabetes_flag,
+    notes: item.notes,
+    source: item.source,
+    raw: item,
   }));
 }
 
 /* ============================================
-   2) Spoonacular – Diabetes-Friendly Recipes
+   3) Recipes – /recipes/diabetes & /recipes/{id}
 =============================================== */
 
-// List resep diabetes-friendly
+/**
+ * List resep diabetes-friendly
+ *
+ * Backend response (/recipes/diabetes):
+ * {
+ *   "success": true,
+ *   "items": [
+ *     {
+ *       "name": "Red Lentil Soup...",
+ *       "ready_in_min": null,
+ *       "carbs_g": 27.98,
+ *       "sugar_g": 0,
+ *       "source": "spoonacular",
+ *       "diabetes_flag": "Watch Carbs",
+ *       "notes": "...",
+ *       "raw": {
+ *         "id": 715415,
+ *         "title": "...",
+ *         "image": "...",
+ *         "nutrition": {...}
+ *       },
+ *       "diabetes_friendly": false
+ *     },
+ *     ...
+ *   ]
+ * }
+ */
 export async function getDiabetesRecipes() {
-  const url = `https://api.spoonacular.com/recipes/complexSearch?apiKey=${SPOONACULAR_KEY}&number=12&maxCarbs=40&addRecipeNutrition=true`;
+  const json = await apiFetch("/recipes/diabetes", {
+    method: "GET",
+  });
 
-  const json = await safeFetch(url);
+  if (!json?.success || !Array.isArray(json.items)) return [];
 
-  return (json.results || []).map((r) => ({
-    id: r.id,
-    title: r.title,
-    cookTime: r.readyInMinutes,
-    kcal: Math.round(
-      r.nutrition?.nutrients?.find((n) => n.name === "Calories")?.amount || 0
-    ),
-    carbs: Math.round(
-      r.nutrition?.nutrients?.find((n) => n.name === "Carbohydrates")?.amount || 0
-    ),
-    sugar: Math.round(
-      r.nutrition?.nutrients?.find((n) => n.name === "Sugar")?.amount || 0
-    ),
-    protein: Math.round(
-      r.nutrition?.nutrients?.find((n) => n.name === "Protein")?.amount || 0
-    ),
-    fat: Math.round(
-      r.nutrition?.nutrients?.find((n) => n.name === "Fat")?.amount || 0
-    ),
-    image: r.image,
-  }));
+  return json.items.map((item) => {
+    const raw = item.raw || {};
+    const cookTime =
+      item.ready_in_min ?? raw.readyInMinutes ?? null;
+
+    return {
+      id: raw.id ?? null,
+      title: raw.title || item.name,
+      image: raw.image || null,
+      cookTime,
+      carbs: item.carbs_g,
+      sugar: item.sugar_g,
+      diabetesFlag: item.diabetes_flag,
+      diabetesFriendly: item.diabetes_friendly,
+      notes: item.notes,
+      source: item.source,
+      raw,
+    };
+  });
 }
 
-// Detail resep
+/**
+ * Detail satu resep
+ *
+ * Backend response (/recipes/{id}):
+ * {
+ *   "success": true,
+ *   "item": {
+ *     "diabetes": {
+ *       "name": "...",
+ *       "carbs_g": 0,
+ *       "sugar_g": 0,
+ *       "source": "spoonacular",
+ *       "extendedIngredients": [...],
+ *       "diabetes_flag": "OK",
+ *       "notes": "..."
+ *     },
+ *     "raw": {
+ *       "id": 716406,
+ *       "title": "...",
+ *       "image": "...",
+ *       "readyInMinutes": 20,
+ *       "servings": 2,
+ *       "extendedIngredients": [...],
+ *       "analyzedInstructions": [...]
+ *       ...
+ *     }
+ *   }
+ * }
+ */
 export async function getRecipeDetail(id) {
-  const url = `https://api.spoonacular.com/recipes/${id}/information?apiKey=${SPOONACULAR_KEY}&includeNutrition=true`;
+  const json = await apiFetch(`/recipes/${id}`, {
+    method: "GET",
+  });
 
-  const r = await safeFetch(url);
+  if (!json?.success || !json.item) {
+    throw new Error("Recipe not found");
+  }
 
-  const carbs = Math.round(
-    r.nutrition?.nutrients?.find((n) => n.name === "Carbohydrates")?.amount || 0
-  );
-  const sugar = Math.round(
-    r.nutrition?.nutrients?.find((n) => n.name === "Sugar")?.amount || 0
-  );
-  const protein = Math.round(
-    r.nutrition?.nutrients?.find((n) => n.name === "Protein")?.amount || 0
-  );
-  const fat = Math.round(
-    r.nutrition?.nutrients?.find((n) => n.name === "Fat")?.amount || 0
-  );
-  const kcal = Math.round(
-    r.nutrition?.nutrients?.find((n) => n.name === "Calories")?.amount || 0
-  );
+  const d = json.item.diabetes || {};
+  const raw = json.item.raw || {};
+
+  const ingredientsArr =
+    d.extendedIngredients ||
+    raw.extendedIngredients ||
+    [];
+
+  const ingredients =
+    ingredientsArr.map((ing) => ing.original || ing.name);
+
+  const steps =
+    raw.analyzedInstructions?.[0]?.steps?.map((s) => s.step) ||
+    ["Instructions not available."];
 
   return {
-    id: r.id,
-    title: r.title,
-    cookTime: r.readyInMinutes,
-    servings: r.servings,
-    image: r.image,
+    id: raw.id ?? null,
+    title: raw.title || d.name || "",
+    image: raw.image || null,
+    cookTime: raw.readyInMinutes ?? null,
+    servings: raw.servings ?? null,
 
-    carbs,
-    sugar,
-    protein,
-    fat,
-    kcal,
+    carbs: d.carbs_g ?? 0,
+    sugar: d.sugar_g ?? 0,
+    diabetesFlag: d.diabetes_flag ?? null,
+    notes: d.notes ?? "",
+    source: d.source ?? "spoonacular",
 
-    ingredients: r.extendedIngredients?.map((i) => i.original) || [],
-    steps:
-      r.analyzedInstructions?.[0]?.steps?.map((s) => s.step) || [
-        "Instruksi tidak tersedia.",
-      ],
+    ingredients,
+    steps,
+
+    raw,
   };
-}
-
-/* ============================================
-   3) Open Food Facts – Product Check
-=============================================== */
-
-// Search by keyword
-export async function searchProductsOFF(keyword) {
-  const url = `${OFF_BASE}/cgi/search.pl?search_terms=${encodeURIComponent(
-    keyword
-  )}&search_simple=1&json=1`;
-
-  const json = await safeFetch(url);
-
-  return (json.products || []).slice(0, 10).map((p) => ({
-    id: p._id || p.id || p.code,
-    name: p.product_name || "Produk tanpa nama",
-    brand: p.brands || "",
-    nutriments: p.nutriments || {},
-  }));
 }

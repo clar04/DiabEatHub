@@ -45,20 +45,23 @@ export default function FoodCheckPanel() {
       const foods = await checkFoodNutritionix(query);
       setResults(foods);
       if (!foods.length) {
-        setErr("Makanan tidak ditemukan di Nutritionix.");
+        setErr("Makanan tidak ditemukan di basis data.");
       }
     } catch (e) {
-      setErr(e.message || "Gagal mengambil data dari Nutritionix.");
+      setErr(e.message || "Gagal mengambil data dari server.");
     } finally {
       setLoading(false);
     }
   }
 
   function handleAdd(item) {
+    // Sesuaikan struktur yang disimpan di log
     addToLog(dateKey, {
       name: item.name,
       unit: item.serving,
-      nutr: item.nutr,
+      carbs: item.carbs ?? 0,
+      sugar: item.sugar ?? 0,
+      diabetesFlag: item.diabetesFlag ?? null,
     });
     setLog(readLogByDate(dateKey));
   }
@@ -79,7 +82,7 @@ export default function FoodCheckPanel() {
             <div className="mt-1 flex gap-2">
               <Input
                 id="q"
-                placeholder="ketik nama menu: nasi goreng, sweet iced tea, dll"
+                placeholder="ketik nama menu: rice, cake, sweet iced tea, dll"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && doSearch()}
@@ -88,9 +91,6 @@ export default function FoodCheckPanel() {
                 Cek
               </Button>
             </div>
-            <p className="mt-2 text-xs text-ink-700">
-              Data diambil dari <span className="font-semibold">Nutritionix</span>.
-            </p>
           </div>
 
           <div>
@@ -107,7 +107,7 @@ export default function FoodCheckPanel() {
         {/* Hasil pencarian */}
         <div className="mt-5">
           {loading && (
-            <p className="text-sm text-ink-700">Mengambil data dari Nutritionix…</p>
+            <p className="text-sm text-ink-700">Mengambil data dari server…</p>
           )}
           {err && !loading && (
             <p className="text-sm text-red-600">Error: {err}</p>
@@ -121,11 +121,18 @@ export default function FoodCheckPanel() {
 
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             {results.map((r, idx) => {
-              const sugar = r.nutr.sugar ?? 0;
-              const carb = r.nutr.carb ?? 0;
-              const tone = sugar > 10 ? "red" : carb > 40 ? "yellow" : "green";
-              const label =
-                sugar > 10 ? "High Sugar" : carb > 40 ? "Watch Carbs" : "OK";
+              const carbs = r.carbs ?? 0;
+              const sugar = r.sugar ?? 0;
+              const flag = r.diabetesFlag || "";
+
+              const tone =
+                flag === "High Sugar"
+                  ? "red"
+                  : flag === "Watch Carbs"
+                  ? "yellow"
+                  : "green";
+
+              const label = flag || "OK";
 
               return (
                 <div
@@ -140,17 +147,27 @@ export default function FoodCheckPanel() {
                       <p className="text-xs text-ink-700">
                         Serving: {r.serving}
                       </p>
+                      {r.notes && (
+                        <p className="mt-1 text-xs text-ink-700">
+                          {r.notes}
+                        </p>
+                      )}
                     </div>
                     <Badge tone={tone}>{label}</Badge>
                   </div>
 
                   <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
-                    <StatTile label="Kals" value={`${r.nutr.kcal} kcal`} />
-                    <StatTile label="Carb" value={`${r.nutr.carb} g`} />
-                    <StatTile label="Sugar" value={`${r.nutr.sugar} g`} />
-                    <StatTile label="Protein" value={`${r.nutr.protein} g`} />
-                    <StatTile label="Fat" value={`${r.nutr.fat} g`} />
-                    <StatTile label="Sodium" value={`${r.nutr.sodium} mg`} />
+                    <StatTile
+                      label="Carbs"
+                      value={`${carbs.toFixed(1)} g`}
+                    />
+                    <StatTile
+                      label="Sugar"
+                      value={`${sugar.toFixed(1)} g`}
+                    />
+                    {r.source && (
+                      <StatTile label="Source" value={r.source} />
+                    )}
                   </div>
 
                   <div className="mt-3">
@@ -185,8 +202,14 @@ export default function FoodCheckPanel() {
                       {it.name}
                     </p>
                     <p className="text-xs text-ink-700">
-                      {it.unit} • {it.nutr.kcal} kcal
+                      {it.unit} • Carbs {it.carbs ?? 0} g • Sugar{" "}
+                      {it.sugar ?? 0} g
                     </p>
+                    {it.diabetesFlag && (
+                      <p className="text-[11px] text-ink-700/80">
+                        {it.diabetesFlag}
+                      </p>
+                    )}
                   </div>
                   <button
                     className="text-ink-700/70 hover:text-ink-900 text-sm"
