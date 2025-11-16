@@ -1,4 +1,3 @@
-// src/pages/Home.jsx
 import Card from "../components/ui/Card";
 import { useProfile } from "../state/ProfileContext";
 import { useGoal } from "../state/GoalContext";
