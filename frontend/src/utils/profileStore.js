@@ -1,4 +1,3 @@
-// src/utils/profileStore.js
 const KEY = "smc_profiles_by_user_v1";
 
 function readMap() {
