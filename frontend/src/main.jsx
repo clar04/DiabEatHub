@@ -1,12 +1,10 @@
-// src/main.jsx
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import App from "./App.jsx";
 
-// pages
-import About from "./pages/About.jsx";        // landing
-import Home from "./pages/Home.jsx";          // goalcard
+import About from "./pages/About.jsx";       
+import Home from "./pages/Home.jsx";          
 import Food from "./pages/Food.jsx";
 import Packaged from "./pages/Packaged.jsx";
 import Recipes from "./pages/Recipes.jsx";
@@ -17,7 +15,6 @@ import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import ErrorPage from "./pages/ErrorPage.jsx";
 
-// contexts
 import { AuthProvider } from "./state/AuthContext.jsx";
 import { ProfileProvider } from "./state/ProfileContext.jsx";
 import { GoalProvider } from "./state/GoalContext.jsx";
