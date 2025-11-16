@@ -1,4 +1,3 @@
-// src/state/ProfileContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const ProfileCtx = createContext(null);
