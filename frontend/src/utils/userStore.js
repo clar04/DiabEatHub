@@ -1,4 +1,3 @@
-// src/utils/userStore.js
 const KEY = "smc_users_v1";
 
 function readUsers() {
