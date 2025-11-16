@@ -1,4 +1,3 @@
-// src/components/Header.jsx
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../state/AuthContext";
 import { useProfile } from "../state/ProfileContext";
