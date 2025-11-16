@@ -1,19 +1,37 @@
-import { Link, useLocation } from "react-router-dom";
+// src/components/Header.jsx
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../state/AuthContext";
 import { useProfile } from "../state/ProfileContext";
-import { isProfileReady } from "../utils/ensureProfile";
 
 export default function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { currentUser, logout } = useAuth();
   const { profile } = useProfile();
-  const ready = isProfileReady(profile);
+
+  const loggedIn = !!currentUser;
+  const displayName = profile?.username || currentUser || "Guest";
 
   const navLinks = [
-    { to: "/about", label: "About" }, 
+    { to: "/", label: "About" },
+    { to: "/home", label: "Home" },
     { to: "/food", label: "Food Check" },
     { to: "/recipes", label: "Suggested Recipes" },
-    { to: "/products", label: "Packaged Product" },
+    { to: "/packaged", label: "Packaged Product" },
     { to: "/history", label: "History" },
   ];
+
+  const isActive = (to) => {
+    if (to === "/") return location.pathname === "/";
+    return location.pathname.startsWith(to);
+  };
+
+  const handleLogout = () => {
+    if (!window.confirm("Logout dari akun ini?")) return;
+    logout();
+    // profile per-username tetap tersimpan di localStorage
+    navigate("/login", { replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur bg-brand-900/70 border-b border-line-200/40">
@@ -26,7 +44,7 @@ export default function Header() {
           <span className="font-semibold text-white">Meal Planner</span>
         </Link>
 
-        {/* Nav – kalau belum login, boleh tetap ditampilkan atau bisa kamu hide */}
+        {/* Nav */}
         <nav className="hidden md:flex items-center gap-6 text-sm">
           {navLinks.map(({ to, label }) => (
             <Link
@@ -34,7 +52,7 @@ export default function Header() {
               to={to}
               className={
                 "transition " +
-                (location.pathname === to
+                (isActive(to)
                   ? "text-brand-100 font-medium underline"
                   : "text-white/80 hover:text-white")
               }
@@ -44,13 +62,42 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Button Login / Profile */}
-        <Link
-          to={ready ? "/profile" : "/login"}
-          className="ml-4 rounded-xl bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 transition"
-        >
-          {ready ? "Profile" : "Login"}
-        </Link>
+        {/* Auth area */}
+        <div className="flex items-center gap-3 text-sm">
+          {loggedIn ? (
+            <>
+              {/* Sapaan dipindah ke Home.jsx, jadi di header kita cukup tombol saja */}
+              <Link
+                to="/profile"
+                className="rounded-xl bg-brand-700 text-white px-3 py-1.5 hover:bg-brand-800 transition"
+              >
+                Profile
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-xl border border-line-200 px-3 py-1.5 text-surface-100 hover:bg-line-200/20 transition"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="rounded-xl border border-line-200 px-3 py-1.5 text-surface-100 hover:bg-line-200/20 transition"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="rounded-xl bg-brand-700 text-white px-3 py-1.5 hover:bg-brand-800 transition"
+              >
+                Register
+              </Link>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

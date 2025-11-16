@@ -1,4 +1,4 @@
-// src/pages/Login.jsx
+// src/pages/Register.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -9,10 +9,9 @@ import Button from "../components/ui/Button";
 
 import { useAuth } from "../state/AuthContext";
 import { useProfile } from "../state/ProfileContext";
-import { verifyUser } from "../utils/userStore";
-import { loadProfileForUser } from "../utils/profileStore";
+import { registerUser } from "../utils/userStore";
 
-export default function Login() {
+export default function Register() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { setProfile } = useProfile();
@@ -20,6 +19,7 @@ export default function Login() {
   const [form, setForm] = useState({
     username: "",
     password: "",
+    confirm: "",
   });
 
   const handleChange = (key) => (e) => {
@@ -30,35 +30,42 @@ export default function Login() {
     e.preventDefault();
 
     const username = form.username.trim();
-    const password = form.password;
+    const { password, confirm } = form;
 
-    if (!username || !password) {
-      alert("Isi username dan password dulu ya.");
+    if (!username || !password || !confirm) {
+      alert("Semua field wajib diisi.");
       return;
     }
 
-    const res = verifyUser(username, password);
+    if (password.length < 6) {
+      alert("Password minimal 6 karakter.");
+      return;
+    }
+
+    if (password !== confirm) {
+      alert("Password dan konfirmasi tidak sama.");
+      return;
+    }
+
+    const res = registerUser(username, password);
     if (!res.ok) {
       alert(res.error);
       return;
     }
 
-    // LOGIN OK
+    // REGISTER OK → anggap langsung login
     login(username);
 
-    const stored = loadProfileForUser(username);
-    if (stored) {
-      setProfile(stored);
-    } else {
-      setProfile({
-        username,
-        sex: "female",
-        age: null,
-        height: null,
-        weight: null,
-      });
-    }
+    // profil baru (kosong, kecuali username)
+    setProfile({
+      username,
+      sex: "female",
+      age: null,
+      height: null,
+      weight: null,
+    });
 
+    alert("Registrasi berhasil! Sekarang lengkapi data diri kamu.");
     navigate("/profile", { replace: true });
   };
 
@@ -66,13 +73,12 @@ export default function Login() {
     <section className="mx-auto max-w-lg px-4 py-10 sm:py-14">
       <Card className="p-6 sm:p-7">
         <h1 className="text-2xl sm:text-3xl font-semibold text-ink-900">
-          Login untuk Mulai
+          Daftar Akun
         </h1>
 
         <p className="mt-2 text-sm text-ink-700">
-          Masuk dengan <span className="font-semibold">username</span> dan{" "}
-          <span className="font-semibold">password</span> yang sudah kamu buat di
-          halaman Register.
+          Buat akun sederhana untuk menyimpan pengaturan dan data profil di
+          browser kamu.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -98,9 +104,23 @@ export default function Login() {
               id="password"
               type="password"
               className="mt-1 text-ink-900 placeholder:text-ink-600"
-              placeholder="••••••••"
+              placeholder="minimal 6 karakter"
               value={form.password}
               onChange={handleChange("password")}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="confirm" className="text-ink-900">
+              Konfirmasi Password
+            </Label>
+            <Input
+              id="confirm"
+              type="password"
+              className="mt-1 text-ink-900 placeholder:text-ink-600"
+              value={form.confirm}
+              onChange={handleChange("confirm")}
               required
             />
           </div>
@@ -109,20 +129,20 @@ export default function Login() {
             type="submit"
             className="mt-4 w-full bg-brand-700 text-black hover:bg-brand-800"
           >
-            Masuk
+            Daftar & Lanjut ke Profil
           </Button>
 
           <p className="mt-3 text-xs text-ink-700">
-            Belum punya akun?{" "}
-            <Link to="/register" className="underline">
-              Daftar di sini
+            Sudah punya akun?{" "}
+            <Link to="/login" className="underline">
+              Login di sini
             </Link>
             .
           </p>
 
           <p className="mt-1 text-[11px] text-ink-900">
-            * Login ini hanya disimpan di browser dan tidak terhubung ke server
-            mana pun. Jangan gunakan password penting.
+            * Akun ini hanya disimpan di browser dan tidak terhubung ke server
+            manapun. Jangan gunakan password penting.
           </p>
         </form>
       </Card>

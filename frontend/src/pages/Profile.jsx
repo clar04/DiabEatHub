@@ -1,19 +1,29 @@
+// src/pages/Profile.jsx
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import Card from "../components/ui/Card";
 import Label from "../components/ui/Label";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
+
 import { useProfile } from "../state/ProfileContext";
+import { isProfileReady } from "../utils/ensureProfile";
+import {
+  saveProfileForUser,
+  deleteProfileForUser,
+} from "../utils/profileStore";
 
 export default function Profile() {
-  const { profile, updateProfile, resetProfile } = useProfile();
+  const { profile, setProfile, resetProfile } = useProfile();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     username: profile?.username || "",
     sex: profile?.sex || "female",
-    age: profile?.age || "",
-    height: profile?.height || "",
-    weight: profile?.weight || "",
+    age: profile?.age ?? "",
+    height: profile?.height ?? "",
+    weight: profile?.weight ?? "",
   });
 
   const handleChange = (key) => (e) => {
@@ -22,6 +32,7 @@ export default function Profile() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     const cleaned = {
       username: form.username.trim(),
       sex: form.sex,
@@ -29,12 +40,29 @@ export default function Profile() {
       height: Number(form.height) || 0,
       weight: Number(form.weight) || 0,
     };
-    updateProfile(cleaned);
-    alert("Data profil tersimpan.");
+
+    setProfile(cleaned);
+    saveProfileForUser(cleaned);
+
+    if (!isProfileReady(cleaned)) {
+      alert("Data belum lengkap atau belum valid, cek lagi ya 🙂");
+      return;
+    }
+
+    navigate("/home", { replace: true });
   };
 
   const handleReset = () => {
-    if (!window.confirm("Hapus seluruh data login & profil?")) return;
+    if (
+      !window.confirm(
+        "Hapus seluruh data profil (jenis kelamin, usia, TB, BB) untuk user ini?"
+      )
+    )
+      return;
+
+    if (profile?.username) {
+      deleteProfileForUser(profile.username);
+    }
     resetProfile();
   };
 
@@ -52,7 +80,6 @@ export default function Profile() {
 
       <Card className="mt-6 p-6 sm:p-7">
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Username */}
           <div>
             <Label htmlFor="username" className="text-ink-900">
               Nama / Username
@@ -66,7 +93,6 @@ export default function Profile() {
             />
           </div>
 
-          {/* Sex + age/height/weight */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="sex" className="text-ink-900">
@@ -81,10 +107,10 @@ export default function Profile() {
                            focus:outline-none focus:ring-4 focus:ring-brand-100 
                            focus:border-brand-500"
               >
-                <option className="text-ink-900" value="female">
+                <option value="female" className="text-ink-900">
                   Perempuan
                 </option>
-                <option className="text-ink-900" value="male">
+                <option value="male" className="text-ink-900">
                   Laki-laki
                 </option>
               </select>
@@ -137,11 +163,11 @@ export default function Profile() {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-3">
-            <Button type="submit">Simpan</Button>
+            <Button type="submit">Simpan & ke Home</Button>
             <Button
               type="button"
               variant="ghost"
-              className="bg-red-400 text-red-800 hover:bg-red-300"
+              className="bg-red-500 text-red-800 hover:bg-red-400"
               onClick={handleReset}
             >
               Hapus data profil

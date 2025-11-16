@@ -1,40 +1,42 @@
+// src/state/ProfileContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const ProfileCtx = createContext(null);
-const KEY = "smc_profile_v2";
+const KEY = "smc_profile_last_v1";
 
-const EMPTY = {
+const DEFAULT_PROFILE = {
   username: "",
-  sex: "",
-  age: 0,
-  height: 0,
-  weight: 0,
+  sex: "female",
+  age: null,
+  height: null,
+  weight: null,
 };
 
 export function ProfileProvider({ children }) {
   const [profile, setProfile] = useState(() => {
+    if (typeof window === "undefined") return DEFAULT_PROFILE;
     const raw = localStorage.getItem(KEY);
-    if (!raw) return EMPTY;
+    if (!raw) return DEFAULT_PROFILE;
     try {
-      const parsed = JSON.parse(raw);
-      return { ...EMPTY, ...parsed };
+      const p = JSON.parse(raw);
+      return { ...DEFAULT_PROFILE, ...p };
     } catch {
-      return EMPTY;
+      return DEFAULT_PROFILE;
     }
   });
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     localStorage.setItem(KEY, JSON.stringify(profile));
   }, [profile]);
 
-  const updateProfile = (partial) => {
-    setProfile((prev) => ({ ...prev, ...partial }));
-  };
+  const updateProfile = (patch) =>
+    setProfile((prev) => ({ ...prev, ...patch }));
 
-  const resetProfile = () => setProfile(EMPTY);
+  const resetProfile = () => setProfile(DEFAULT_PROFILE);
 
   const value = useMemo(
-    () => ({ profile, updateProfile, resetProfile }),
+    () => ({ profile, setProfile, updateProfile, resetProfile }),
     [profile]
   );
 

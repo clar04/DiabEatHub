@@ -1,15 +1,21 @@
-export function isLoggedIn(profile) {
+// src/utils/ensureProfile.js
+
+// profile dianggap "siap" kalau semua field dasar terisi wajar
+export function isProfileReady(profile) {
   if (!profile) return false;
-  return typeof profile.username === "string" && profile.username.trim().length > 0;
+  const { username, sex, age, height, weight } = profile;
+  if (!username || !username.trim()) return false;
+  if (sex !== "male" && sex !== "female") return false;
+  if (!age || age < 10) return false;
+  if (!height || height < 100) return false;
+  if (!weight || weight < 20) return false;
+  return true;
 }
 
-export function isProfileReady(profile) {
-  if (!isLoggedIn(profile) || !profile) return false;
-  const { sex, age, height, weight } = profile;
-  return (
-    !!sex &&
-    Number(age) > 0 &&
-    Number(height) > 0 &&
-    Number(weight) > 0
-  );
+// helper fleksibel: bisa kirim string (username) atau object {username}
+export function isLoggedIn(x) {
+  if (!x) return false;
+  if (typeof x === "string") return !!x;
+  if (typeof x === "object") return !!x.username;
+  return false;
 }
