@@ -1,5 +1,3 @@
-// src/utils/ensureProfile.js
-
 // profile dianggap "siap" kalau semua field dasar terisi wajar
 export function isProfileReady(profile) {
   if (!profile) return false;
