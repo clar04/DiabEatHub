@@ -8,8 +8,7 @@ import Button from "../components/ui/Button";
 
 import { useAuth } from "../state/AuthContext";
 import { useProfile } from "../state/ProfileContext";
-import { verifyUser } from "../utils/userStore";
-import { loadProfileForUser } from "../utils/profileStore";
+import { api, setAuthToken } from "../utils/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -25,41 +24,37 @@ export default function Login() {
     setForm((s) => ({ ...s, [key]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const username = form.username.trim();
-    const password = form.password;
+  const username = form.username.trim();
+  const password = form.password;
 
-    if (!username || !password) {
-      alert("Isi username dan password dulu ya.");
-      return;
-    }
+  if (!username || !password) return alert("Isi username dan password dulu ya.");
 
-    const res = verifyUser(username, password);
-    if (!res.ok) {
-      alert(res.error);
-      return;
-    }
+  try {
+    const { data } = await api.post('/login', { username, password });
+    localStorage.setItem('token', data.token);
+    setAuthToken(data.token);
 
-    // LOGIN OK
-    login(username);
+    // update auth state
+    login(data.user.name);
 
-    const stored = loadProfileForUser(username);
-    if (stored) {
-      setProfile(stored);
-    } else {
-      setProfile({
-        username,
-        sex: "female",
-        age: null,
-        height: null,
-        weight: null,
-      });
-    }
+    // (opsional) fetch /me, untuk sekarang isi default
+    setProfile({
+      username: data.user.name,
+      sex: "female",
+      age: null,
+      height: null,
+      weight: null,
+    });
 
     navigate("/profile", { replace: true });
-  };
+  } catch (err) {
+    alert(err?.response?.data?.message ?? "Login gagal");
+  }
+};
+
 
   return (
     <section className="mx-auto max-w-lg px-4 py-10 sm:py-14">

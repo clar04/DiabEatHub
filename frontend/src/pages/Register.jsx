@@ -8,7 +8,8 @@ import Button from "../components/ui/Button";
 
 import { useAuth } from "../state/AuthContext";
 import { useProfile } from "../state/ProfileContext";
-import { registerUser } from "../utils/userStore";
+import { api, setAuthToken } from "../utils/api";
+
 
 export default function Register() {
   const navigate = useNavigate();
@@ -25,39 +26,22 @@ export default function Register() {
     setForm((s) => ({ ...s, [key]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  const username = form.username.trim();
+  const { password, confirm } = form;
 
-    const username = form.username.trim();
-    const { password, confirm } = form;
+  if (!username || !password || !confirm) return alert("Semua field wajib diisi.");
+  if (password.length < 6) return alert("Password minimal 6 karakter.");
+  if (password !== confirm) return alert("Password dan konfirmasi tidak sama.");
 
-    if (!username || !password || !confirm) {
-      alert("Semua field wajib diisi.");
-      return;
-    }
-
-    if (password.length < 6) {
-      alert("Password minimal 6 karakter.");
-      return;
-    }
-
-    if (password !== confirm) {
-      alert("Password dan konfirmasi tidak sama.");
-      return;
-    }
-
-    const res = registerUser(username, password);
-    if (!res.ok) {
-      alert(res.error);
-      return;
-    }
-
-    // REGISTER OK → anggap langsung login
-    login(username);
-
-    // profil baru (kosong, kecuali username)
+  try {
+    const { data } = await api.post('/register', { username, password });
+    localStorage.setItem('token', data.token);
+    setAuthToken(data.token);
+    login(data.user.name);
     setProfile({
-      username,
+      username: data.user.name,
       sex: "female",
       age: null,
       height: null,
@@ -66,7 +50,10 @@ export default function Register() {
 
     alert("Registrasi berhasil! Sekarang lengkapi data diri kamu.");
     navigate("/profile", { replace: true });
-  };
+  } catch (err) {
+    alert(err?.response?.data?.message ?? "Register gagal");
+  }
+};
 
   return (
     <section className="mx-auto max-w-lg px-4 py-10 sm:py-14">
