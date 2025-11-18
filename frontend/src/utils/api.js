@@ -1,15 +1,7 @@
-// api.js
-// ======================================================
-// Centralized fetch wrapper + helpers for Laravel Sanctum
-// ======================================================
-
 const TOKEN_KEY = "authToken";
 const DEFAULT_TIMEOUT_MS = 20000; // 20s
-
-export const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
-// ---- Token helpers ----
 export function getAuthToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -19,7 +11,6 @@ export function setAuthToken(token) {
   else localStorage.removeItem(TOKEN_KEY);
 }
 
-// ---- Internal: fetch with timeout ----
 async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
@@ -34,7 +25,6 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_TIMEOUT_M
   }
 }
 
-// ---- Core wrapper ----
 export async function apiFetch(path, options = {}) {
   try {
     const method = (options.method || "GET").toUpperCase();
@@ -52,7 +42,6 @@ export async function apiFetch(path, options = {}) {
       ...(options.headers || {}),
     };
 
-    // Auto stringify JSON body
     let body = options.body;
     if (!isFormData && body && typeof body === "object") {
       body = JSON.stringify(body);
@@ -65,13 +54,11 @@ export async function apiFetch(path, options = {}) {
       body: method === "GET" || method === "HEAD" ? undefined : body,
     });
 
-    // Non-OK → parse error body if possible
     if (!res.ok) {
       let detail = null;
       try {
         detail = await res.json();
       } catch (_) {
-        // ignore parse error
       }
 
       const message =
@@ -80,7 +67,6 @@ export async function apiFetch(path, options = {}) {
         detail?.detail ||
         `HTTP ${res.status}`;
 
-      // Optional: auto-clear token when unauthorized
       if (res.status === 401) setAuthToken(null);
 
       const err = new Error(message);
@@ -89,10 +75,9 @@ export async function apiFetch(path, options = {}) {
       throw err;
     }
 
-    // No content
+
     if (res.status === 204) return null;
 
-    // Try JSON, fallback text
     const contentType = res.headers.get("content-type") || "";
     if (contentType.includes("application/json")) {
       return await res.json();
@@ -106,13 +91,9 @@ export async function apiFetch(path, options = {}) {
   }
 }
 
-// ======================================================
-// Auth helpers (Laravel Sanctum Bearer token style)
-// ======================================================
 
-/**
- * Register → { success, user:{id,name}, token }
- */
+//  Register → { success, user:{id,name}, token }
+
 export async function authRegister(username, password) {
   const data = await apiFetch("/register", {
     method: "POST",
@@ -122,9 +103,7 @@ export async function authRegister(username, password) {
   return data;
 }
 
-/**
- * Login → { success, user:{id,name}, token }
- */
+//  Login → { success, user:{id,name}, token }
 export async function authLogin(username, password) {
   const data = await apiFetch("/login", {
     method: "POST",
@@ -134,16 +113,12 @@ export async function authLogin(username, password) {
   return data;
 }
 
-/**
- * Me (protected) → { success, user:{id,name} }
- */
+
 export async function authMe() {
   return await apiFetch("/me", { method: "GET" });
 }
 
-/**
- * Logout (protected) → { success, message }
- */
+
 export async function authLogout() {
   try {
     await apiFetch("/logout", { method: "POST" });
@@ -152,10 +127,7 @@ export async function authLogout() {
   }
 }
 
-// ======================================================
-/* 1) Food Check – /food/check
-   BE should accept ?q=... (or alias of ?query=...) */
-// ======================================================
+// GET /food/check?q=...
 export async function checkFoodNutritionix(query) {
   const json = await apiFetch(`/food/check?q=${encodeURIComponent(query)}`, {
     method: "GET",
@@ -174,9 +146,7 @@ export async function checkFoodNutritionix(query) {
   }));
 }
 
-// ======================================================
-/* History – /history/food (public or protected, sesuai BE) */
-// ======================================================
+// GET /history/food
 export async function getFoodHistory() {
   const json = await apiFetch("/history/food", { method: "GET" });
   if (!json?.success || !Array.isArray(json.items)) return [];
@@ -202,9 +172,7 @@ export async function getFoodHistory() {
   });
 }
 
-// ======================================================
-/* 2) Products – /products/search (OpenFoodFacts) */
-// ======================================================
+// GET /products/search?q=...
 export async function searchProductsOFF(keyword) {
   const json = await apiFetch(
     `/products/search?q=${encodeURIComponent(keyword)}`,
@@ -225,15 +193,10 @@ export async function searchProductsOFF(keyword) {
   }));
 }
 
-// ======================================================
-/* 3) Recipes – /recipes/diabetes, /recipes/search, /recipes/{id} */
-// ======================================================
 
-/**
- * List diabetes-friendly (server-driven filter)
- */
+// GET Recipes – /recipes/diabetes, /recipes/search, /recipes/{id} 
+
 export async function getDiabetesRecipes(params = {}) {
-  // allow optional params like { maxCarbs: 30, readyIn: 30 }
   const qs = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
     if (v !== undefined && v !== null && v !== "") qs.set(k, String(v));
@@ -264,10 +227,6 @@ export async function getDiabetesRecipes(params = {}) {
   });
 }
 
-/**
- * Free-text recipe search (client-driven query)
- * Requires backend endpoint: GET /recipes/search?q=...
- */
 export async function searchRecipes(query, limit = 10) {
   const qs = new URLSearchParams();
   qs.set("q", query);
@@ -297,9 +256,6 @@ export async function searchRecipes(query, limit = 10) {
   });
 }
 
-/**
- * Detail satu resep
- */
 export async function getRecipeDetail(id) {
   const json = await apiFetch(`/recipes/${id}`, { method: "GET" });
 

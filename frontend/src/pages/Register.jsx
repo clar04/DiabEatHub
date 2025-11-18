@@ -8,8 +8,9 @@ import Button from "../components/ui/Button";
 
 import { useAuth } from "../state/AuthContext";
 import { useProfile } from "../state/ProfileContext";
-import { api, setAuthToken } from "../utils/api";
 
+// Pakai helper server-side yang memang memanggil /api/register
+import { authRegister } from "../utils/api";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -22,38 +23,54 @@ export default function Register() {
     confirm: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (key) => (e) => {
     setForm((s) => ({ ...s, [key]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  const username = form.username.trim();
-  const { password, confirm } = form;
+    e.preventDefault();
 
-  if (!username || !password || !confirm) return alert("Semua field wajib diisi.");
-  if (password.length < 6) return alert("Password minimal 6 karakter.");
-  if (password !== confirm) return alert("Password dan konfirmasi tidak sama.");
+    const username = form.username.trim();
+    const { password, confirm } = form;
 
-  try {
-    const { data } = await api.post('/register', { username, password });
-    localStorage.setItem('token', data.token);
-    setAuthToken(data.token);
-    login(data.user.name);
-    setProfile({
-      username: data.user.name,
-      sex: "female",
-      age: null,
-      height: null,
-      weight: null,
-    });
+    // Validasi FE — kalau gagal, tidak akan ada network request (ini normal)
+    if (!username || !password || !confirm) {
+      alert("Semua field wajib diisi.");
+      return;
+    }
+    if (password.length < 6) {
+      alert("Password minimal 6 karakter.");
+      return;
+    }
+    if (password !== confirm) {
+      alert("Password dan konfirmasi tidak sama.");
+      return;
+    }
 
-    alert("Registrasi berhasil! Sekarang lengkapi data diri kamu.");
-    navigate("/profile", { replace: true });
-  } catch (err) {
-    alert(err?.response?.data?.message ?? "Register gagal");
-  }
-};
+    try {
+      setLoading(true);
+      const data = await authRegister(username, password);
+      login(data.user, data.token);
+
+      setProfile({
+        username: data.user.name,
+        sex: "female",
+        age: null,
+        height: null,
+        weight: null,
+      });
+
+      alert("Registrasi berhasil! Sekarang lengkapi data diri kamu.");
+      navigate("/profile", { replace: true });
+    } catch (err) {
+      console.error("[REGISTER] failed:", err);
+      alert(err?.message || "Register gagal");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section className="mx-auto max-w-lg px-4 py-10 sm:py-14">
@@ -113,9 +130,10 @@ export default function Register() {
 
           <Button
             type="submit"
-            className="mt-4 w-full bg-brand-700 text-black hover:bg-brand-800"
+            disabled={loading}
+            className="mt-4 w-full bg-brand-700 text-black hover:bg-brand-800 disabled:opacity-60"
           >
-            Daftar & Lanjut ke Profil
+            {loading ? "Mendaftar..." : "Daftar & Lanjut ke Profil"}
           </Button>
 
           <p className="mt-3 text-xs text-ink-700">
@@ -124,11 +142,6 @@ export default function Register() {
               Login di sini
             </Link>
             .
-          </p>
-
-          <p className="mt-1 text-[11px] text-ink-900">
-            * Akun ini hanya disimpan di browser dan tidak terhubung ke server
-            manapun. Jangan gunakan password penting.
           </p>
         </form>
       </Card>

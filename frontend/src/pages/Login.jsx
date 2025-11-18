@@ -8,53 +8,62 @@ import Button from "../components/ui/Button";
 
 import { useAuth } from "../state/AuthContext";
 import { useProfile } from "../state/ProfileContext";
-import { api, setAuthToken } from "../utils/api";
+import { authLogin, authMe } from "../utils/api";
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { setProfile } = useProfile();
 
-  const [form, setForm] = useState({
-    username: "",
-    password: "",
-  });
+  const [form, setForm] = useState({ username: "", password: "" });
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (key) => (e) => {
+  const handleChange = (key) => (e) =>
     setForm((s) => ({ ...s, [key]: e.target.value }));
-  };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const username = form.username.trim();
-  const password = form.password;
+    const username = form.username.trim();
+    const password = form.password;
 
-  if (!username || !password) return alert("Isi username dan password dulu ya.");
+    if (!username || !password) {
+      alert("Isi username dan password dulu ya.");
+      return;
+    }
 
-  try {
-    const { data } = await api.post('/login', { username, password });
-    localStorage.setItem('token', data.token);
-    setAuthToken(data.token);
+    try {
+      setLoading(true);
 
-    // update auth state
-    login(data.user.name);
+      const data = await authLogin(username, password);
+      login(data.user, data.token);
+      try {
+        const me = await authMe();
+        setProfile({
+          username: me?.user?.name ?? data.user.name,
+          sex: "female",
+          age: null,
+          height: null,
+          weight: null,
+        });
+      } catch {
+        setProfile({
+          username: data.user.name,
+          sex: "female",
+          age: null,
+          height: null,
+          weight: null,
+        });
+      }
 
-    // (opsional) fetch /me, untuk sekarang isi default
-    setProfile({
-      username: data.user.name,
-      sex: "female",
-      age: null,
-      height: null,
-      weight: null,
-    });
-
-    navigate("/profile", { replace: true });
-  } catch (err) {
-    alert(err?.response?.data?.message ?? "Login gagal");
-  }
-};
-
+      navigate("/profile", { replace: true });
+    } catch (err) {
+      console.error("[LOGIN] failed:", err);
+      alert(err?.message || "Login gagal");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section className="mx-auto max-w-lg px-4 py-10 sm:py-14">
@@ -71,9 +80,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <Label htmlFor="username" className="text-ink-900">
-              Username
-            </Label>
+            <Label htmlFor="username" className="text-ink-900">Username</Label>
             <Input
               id="username"
               className="mt-1 text-ink-900 placeholder:text-ink-600"
@@ -85,9 +92,7 @@ export default function Login() {
           </div>
 
           <div>
-            <Label htmlFor="password" className="text-ink-900">
-              Password
-            </Label>
+            <Label htmlFor="password" className="text-ink-900">Password</Label>
             <Input
               id="password"
               type="password"
@@ -101,22 +106,15 @@ export default function Login() {
 
           <Button
             type="submit"
-            className="mt-4 w-full bg-brand-700 text-black hover:bg-brand-800"
+            disabled={loading}
+            className="mt-4 w-full bg-brand-700 text-black hover:bg-brand-800 disabled:opacity-60"
           >
-            Masuk
+            {loading ? "Masuk..." : "Masuk"}
           </Button>
 
           <p className="mt-3 text-xs text-ink-700">
             Belum punya akun?{" "}
-            <Link to="/register" className="underline">
-              Daftar di sini
-            </Link>
-            .
-          </p>
-
-          <p className="mt-1 text-[11px] text-ink-900">
-            * Login ini hanya disimpan di browser dan tidak terhubung ke server
-            mana pun. Jangan gunakan password penting.
+            <Link to="/register" className="underline">Daftar di sini</Link>.
           </p>
         </form>
       </Card>
