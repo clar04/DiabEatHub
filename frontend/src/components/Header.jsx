@@ -7,7 +7,6 @@ export default function Header() {
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
   const { profile } = useProfile();
-
   const loggedIn = !!currentUser;
   const displayName = profile?.username || currentUser || "Guest";
 
@@ -33,49 +32,56 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur bg-brand-900/70 border-b border-line-200/40">
+    <header className="sticky top-0 z-50 backdrop-blur-md bg-brand-900/80 border-b border-line-200/40 shadow-lg shadow-brand-900/20">
       <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-3">
-          <div className="size-8 rounded-xl bg-accent-600 flex items-center justify-center text-brand-700 font-bold">
+        {/* Logo with enhanced styling */}
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="size-8 rounded-xl bg-accent-600 flex items-center justify-center text-brand-700 font-bold shadow-md group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-accent-600/50 transition-all duration-300">
             SM
           </div>
-          <span className="font-semibold text-white">Meal Planner</span>
+          <span className="font-semibold text-white group-hover:text-accent-600 transition-colors duration-300">
+            Meal Planner
+          </span>
         </Link>
 
-        {/* Nav */}
+        {/* Nav with enhanced hover effects */}
         <nav className="hidden md:flex items-center gap-6 text-sm">
           {navLinks.map(({ to, label }) => (
             <Link
               key={to}
               to={to}
               className={
-                "transition " +
+                "relative transition-all duration-300 py-1 " +
                 (isActive(to)
-                  ? "text-brand-100 font-medium underline"
-                  : "text-white/80 hover:text-white")
+                  ? "text-brand-100 font-medium"
+                  : "text-white/80 hover:text-white hover:scale-105")
               }
             >
-              {label}
+              <span className="relative z-10">{label}</span>
+              {isActive(to) && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent-600 rounded-full shadow-sm shadow-accent-600/50" />
+              )}
+              {!isActive(to) && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/20 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full" />
+              )}
             </Link>
           ))}
         </nav>
 
-        {/* Auth area */}
+        {/* Auth area with enhanced buttons */}
         <div className="flex items-center gap-3 text-sm">
           {loggedIn ? (
             <>
-              {/* Sapaan dipindah ke Home.jsx, jadi di header kita cukup tombol saja */}
               <Link
                 to="/profile"
-                className="rounded-xl bg-brand-700 text-white px-3 py-1.5 hover:bg-brand-800 transition"
+                className="rounded-xl bg-brand-700 text-white px-4 py-2 hover:bg-brand-800 hover:shadow-lg hover:shadow-brand-700/30 hover:scale-105 transition-all duration-300 font-medium"
               >
                 Profile
               </Link>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="rounded-xl border border-line-200 px-3 py-1.5 text-surface-100 hover:bg-line-200/20 transition"
+                className="rounded-xl border border-line-200 px-4 py-2 text-surface-100 hover:bg-line-200/20 hover:border-line-200/60 hover:scale-105 transition-all duration-300"
               >
                 Logout
               </button>
@@ -84,13 +90,13 @@ export default function Header() {
             <>
               <Link
                 to="/login"
-                className="rounded-xl border border-line-200 px-3 py-1.5 text-surface-100 hover:bg-line-200/20 transition"
+                className="rounded-xl border border-line-200 px-4 py-2 text-surface-100 hover:bg-line-200/20 hover:border-line-200/60 hover:scale-105 transition-all duration-300"
               >
                 Login
               </Link>
               <Link
                 to="/register"
-                className="rounded-xl bg-brand-700 text-white px-3 py-1.5 hover:bg-brand-800 transition"
+                className="rounded-xl bg-brand-700 text-white px-4 py-2 hover:bg-brand-800 hover:shadow-lg hover:shadow-brand-700/30 hover:scale-105 transition-all duration-300 font-medium"
               >
                 Register
               </Link>
