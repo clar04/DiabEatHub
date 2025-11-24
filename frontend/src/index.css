@@ -26,8 +26,26 @@ html, body, #root {
   height: 100%;
 }
 
+/* === NEW: Background tidak polos === */
 body {
-  @apply bg-brand-900 text-slate-100 antialiased;
+  background:
+    /* Glow kiri */
+    radial-gradient(
+      circle at 15% 20%,
+      rgba(182, 219, 140, 0.20),
+      transparent 55%
+    ),
+    /* Glow kanan bawah */
+    radial-gradient(
+      circle at 85% 80%,
+      rgba(129, 175, 152, 0.18),
+      transparent 60%
+    ),
+    /* Warna dasar brand */
+    var(--color-brand-900);
+
+  background-attachment: fixed;
+  @apply text-slate-100 antialiased;
 }
 
 /* ---------- CUSTOM UTILITIES ---------- */
@@ -36,7 +54,7 @@ body {
 @utility card {
   background-color: var(--color-surface);
   border: 1px solid var(--color-line-200);
-  border-radius: 1rem; /* 2xl */
+  border-radius: 1rem;
   box-shadow: var(--shadow-soft);
 }
 
@@ -44,7 +62,7 @@ body {
 @utility field {
   background-color: var(--color-surface-100);
   border: 1px solid var(--color-line-200);
-  border-radius: 0.75rem; /* xl */
+  border-radius: 0.75rem;
   color: var(--color-ink-900);
 }
 

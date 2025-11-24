@@ -21,7 +21,8 @@ function StatTile({ label, value }) {
   );
 }
 
-export default function FoodCheckPanel() {
+// TERIMA PROP onAddSuccess DARI Food.jsx
+export default function FoodCheckPanel({ onAddSuccess }) {
   const [query, setQuery] = useState("");
   const [dateKey, setDateKey] = useState(toDateKey());
 
@@ -55,7 +56,7 @@ export default function FoodCheckPanel() {
   }
 
   function handleAdd(item) {
-    // Sesuaikan struktur yang disimpan di log
+    // Simpan ke log
     addToLog(dateKey, {
       name: item.name,
       unit: item.serving,
@@ -64,6 +65,11 @@ export default function FoodCheckPanel() {
       diabetesFlag: item.diabetesFlag ?? null,
     });
     setLog(readLogByDate(dateKey));
+
+    // TRIGGER POPUP SUKSES (kalau dikirim dari parent)
+    if (typeof onAddSuccess === "function") {
+      onAddSuccess();
+    }
   }
 
   function handleRemove(idx) {
@@ -115,7 +121,8 @@ export default function FoodCheckPanel() {
 
           {!loading && !err && results.length === 0 && (
             <p className="text-sm text-ink-700">
-              Ketik nama makanan lalu tekan <span className="font-medium">Cek</span>.
+              Ketik nama makanan lalu tekan{" "}
+              <span className="font-medium">Cek</span>.
             </p>
           )}
 
@@ -141,33 +148,21 @@ export default function FoodCheckPanel() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-semibold text-ink-900">
-                        {r.name}
-                      </p>
+                      <p className="font-semibold text-ink-900">{r.name}</p>
                       <p className="text-xs text-ink-700">
                         Serving: {r.serving}
                       </p>
                       {r.notes && (
-                        <p className="mt-1 text-xs text-ink-700">
-                          {r.notes}
-                        </p>
+                        <p className="mt-1 text-xs text-ink-700">{r.notes}</p>
                       )}
                     </div>
                     <Badge tone={tone}>{label}</Badge>
                   </div>
 
                   <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
-                    <StatTile
-                      label="Carbs"
-                      value={`${carbs.toFixed(1)} g`}
-                    />
-                    <StatTile
-                      label="Sugar"
-                      value={`${sugar.toFixed(1)} g`}
-                    />
-                    {r.source && (
-                      <StatTile label="Source" value={r.source} />
-                    )}
+                    <StatTile label="Carbs" value={`${carbs.toFixed(1)} g`} />
+                    <StatTile label="Sugar" value={`${sugar.toFixed(1)} g`} />
+                    {r.source && <StatTile label="Source" value={r.source} />}
                   </div>
 
                   <div className="mt-3">

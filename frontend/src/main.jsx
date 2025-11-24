@@ -1,10 +1,12 @@
+// src/main.jsx
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import App from "./App.jsx";
 
-import About from "./pages/About.jsx";       
-import Home from "./pages/Home.jsx";          
+// pages
+import About from "./pages/About.jsx";
+import Home from "./pages/Home.jsx";
 import Food from "./pages/Food.jsx";
 import Packaged from "./pages/Packaged.jsx";
 import Recipes from "./pages/Recipes.jsx";
@@ -15,6 +17,7 @@ import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import ErrorPage from "./pages/ErrorPage.jsx";
 
+// contexts
 import { AuthProvider } from "./state/AuthContext.jsx";
 import { ProfileProvider } from "./state/ProfileContext.jsx";
 import { GoalProvider } from "./state/GoalContext.jsx";
@@ -25,13 +28,12 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
-    errorElement: <ErrorPage />,
     children: [
-      // HOME = ABOUT (landing)
+      // landing
       { index: true, element: <About /> },
       { path: "about", element: <About /> },
 
-      // Home internal (goalcard + summary)
+      // home (goal card + summary)
       { path: "home", element: <Home /> },
 
       { path: "food", element: <Food /> },
@@ -45,6 +47,9 @@ const router = createBrowserRouter([
       // auth
       { path: "login", element: <Login /> },
       { path: "register", element: <Register /> },
+
+      // wildcard 404
+      { path: "*", element: <ErrorPage /> },
     ],
   },
 ]);

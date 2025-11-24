@@ -1,3 +1,4 @@
+// src/pages/Home.jsx
 import Card from "../components/ui/Card";
 import { useProfile } from "../state/ProfileContext";
 import { useGoal } from "../state/GoalContext";
@@ -11,6 +12,7 @@ import { Link } from "react-router-dom";
 import { isProfileReady } from "../utils/ensureProfile";
 import DailySummary from "../components/home/DailySummary";
 import { toDateKey } from "../utils/foodLog";
+import { Flame, Activity, Target, HeartPulse } from "lucide-react";
 
 export default function Home() {
   const { profile } = useProfile();
@@ -53,22 +55,46 @@ export default function Home() {
 
   return (
     <section>
-      {/* Sapaan pindahan dari navbar */}
-      <h1 className="text-2xl sm:text-3xl font-semibold text-white mb-4">
-        Hi, {displayName}
-      </h1>
+      {/* Sapaan + avatar lebih besar biar berasa hero section */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-12 h-12 rounded-full bg-accent-600/80 flex items-center justify-center text-brand-800 font-semibold shadow-md">
+          {displayName[0]?.toUpperCase() || "U"}
+        </div>
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white">
+            Hi, {displayName} 👋
+          </h1>
+          <p className="mt-1 text-sm sm:text-base text-surface-200/90">
+            Ini ringkasan target kalori dan aktivitasmu hari ini.
+          </p>
+        </div>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2 p-6">
-          <h2 className="text-base font-semibold text-ink-900">Your Goal</h2>
-          <p className="mt-1 text-sm text-ink-700">
-            Atur aktivitas & tujuan. Data profil (jenis kelamin, usia, tinggi,
-            berat) di halaman{" "}
-            <Link to="/profile" className="underline">
-              Profile
-            </Link>
-            .
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-ink-900">
+                Your Goal
+              </h2>
+              <p className="mt-1 text-sm text-ink-700">
+                Atur aktivitas & tujuan. Data profil (jenis kelamin, usia,
+                tinggi, berat) di halaman{" "}
+                <Link to="/profile" className="underline">
+                  Profile
+                </Link>
+                .
+              </p>
+            </div>
+            {/* Icon kecil di kanan judul */}
+            <div className="hidden sm:flex w-10 h-10 rounded-xl bg-accent-600/20 items-center justify-center">
+              <HeartPulse
+                className="w-5 h-5 stroke-brand-800"
+                aria-hidden="true"
+              />
+            </div>
+          </div>
+
           <hr className="my-4 border-line-200" />
 
           {!isProfileReady(profile) && (
@@ -128,29 +154,58 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Tiga kartu BMR / TDEE / Target dengan ikon */}
           <div className="mt-5 grid gap-3 sm:grid-cols-3 text-sm">
-            <div className="rounded-xl border border-line-200 bg-surface-100 p-3">
-              <p className="text-ink-700">BMR</p>
-              <p className="text-lg font-semibold text-ink-900">
-                {bmr.toLocaleString()} kcal
-              </p>
+            <div className="rounded-xl border border-line-200 bg-surface-100 p-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-accent-600/25 flex items-center justify-center">
+                <Flame
+                  className="w-5 h-5 stroke-brand-800"
+                  aria-hidden="true"
+                />
+              </div>
+              <div>
+                <p className="text-ink-700">BMR</p>
+                <p className="text-lg font-semibold text-ink-900">
+                  {bmr.toLocaleString()} kcal
+                </p>
+              </div>
             </div>
-            <div className="rounded-xl border border-line-200 bg-surface-100 p-3">
-              <p className="text-ink-700">TDEE (maintain)</p>
-              <p className="text-lg font-semibold text-ink-900">
-                {tdee.toLocaleString()} kcal
-              </p>
+
+            <div className="rounded-xl border border-line-200 bg-surface-100 p-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-accent-600/25 flex items-center justify-center">
+                <Activity
+                  className="w-5 h-5 stroke-brand-800"
+                  aria-hidden="true"
+                />
+              </div>
+              <div>
+                <p className="text-ink-700">TDEE (maintain)</p>
+                <p className="text-lg font-semibold text-ink-900">
+                  {tdee.toLocaleString()} kcal
+                </p>
+              </div>
             </div>
-            <div className="rounded-xl border border-line-200 bg-surface-100 p-3">
-              <p className="text-ink-700">Target harian</p>
-              <p className="text-lg font-semibold text-ink-900">
-                {target.toLocaleString()} kcal
-              </p>
+
+            <div className="rounded-xl border border-line-200 bg-surface-100 p-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-accent-600/25 flex items-center justify-center">
+                <Target
+                  className="w-5 h-5 stroke-brand-800"
+                  aria-hidden="true"
+                />
+              </div>
+              <div>
+                <p className="text-ink-700">Target harian</p>
+                <p className="text-lg font-semibold text-ink-900">
+                  {target.toLocaleString()} kcal
+                </p>
+              </div>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 flex flex-col justify-center">
+        <Card className="p-6 flex flex-col justify-center relative overflow-hidden">
+          {/* dekor bulat samar biar card nggak polos */}
+          <div className="pointer-events-none absolute -right-12 -top-12 w-32 h-32 rounded-full bg-accent-600/10" />
           <p className="text-xs text-ink-700 font-medium">Status</p>
           <p className="mt-1 text-3xl font-semibold leading-tight text-ink-900">
             {title}

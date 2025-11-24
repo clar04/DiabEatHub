@@ -1,7 +1,24 @@
+// src/utils/api.js
+
+// Key token di localStorage
 const TOKEN_KEY = "authToken";
 const DEFAULT_TIMEOUT_MS = 20000; // 20s
-  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
+// ==========================
+// BASE URL API BACKEND
+// ==========================
+// Ambil dari .env Vite: VITE_API_BASE_URL atau VITE_API_BASE
+// Kalau tidak ada, fallback ke http://127.0.0.1:8000/api
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_BASE ||
+  "http://127.0.0.1:8000/api";
+
+console.log("API_BASE =", API_BASE);
+
+// ---------------------
+// Token helpers
+// ---------------------
 export function getAuthToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -11,6 +28,9 @@ export function setAuthToken(token) {
   else localStorage.removeItem(TOKEN_KEY);
 }
 
+// ---------------------
+// Fetch dengan timeout
+// ---------------------
 async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
@@ -25,6 +45,9 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_TIMEOUT_M
   }
 }
 
+// ---------------------
+// Wrapper utama API
+// ---------------------
 export async function apiFetch(path, options = {}) {
   try {
     const method = (options.method || "GET").toUpperCase();
@@ -47,18 +70,22 @@ export async function apiFetch(path, options = {}) {
       body = JSON.stringify(body);
     }
 
-    const res = await fetchWithTimeout(`${API_BASE}${path}`, {
+    const url = `${API_BASE}${path}`;
+
+    const res = await fetchWithTimeout(url, {
       ...options,
       method,
       headers,
       body: method === "GET" || method === "HEAD" ? undefined : body,
     });
 
+    // Kalau status bukan 2xx → lempar error
     if (!res.ok) {
       let detail = null;
       try {
         detail = await res.json();
       } catch (_) {
+        // abaikan kalau bukan JSON
       }
 
       const message =
@@ -75,7 +102,7 @@ export async function apiFetch(path, options = {}) {
       throw err;
     }
 
-
+    // 204 No Content
     if (res.status === 204) return null;
 
     const contentType = res.headers.get("content-type") || "";
@@ -91,9 +118,11 @@ export async function apiFetch(path, options = {}) {
   }
 }
 
+// =============================
+// AUTH: register / login / me
+// =============================
 
-//  Register → { success, user:{id,name}, token }
-
+// POST /register → { success, user:{id,username}, token }
 export async function authRegister(username, password) {
   const data = await apiFetch("/register", {
     method: "POST",
@@ -103,7 +132,7 @@ export async function authRegister(username, password) {
   return data;
 }
 
-//  Login → { success, user:{id,name}, token }
+// POST /login → { success, user:{id,username}, token }
 export async function authLogin(username, password) {
   const data = await apiFetch("/login", {
     method: "POST",
@@ -113,12 +142,12 @@ export async function authLogin(username, password) {
   return data;
 }
 
-
+// GET /me
 export async function authMe() {
   return await apiFetch("/me", { method: "GET" });
 }
 
-
+// POST /logout
 export async function authLogout() {
   try {
     await apiFetch("/logout", { method: "POST" });
@@ -126,6 +155,10 @@ export async function authLogout() {
     setAuthToken(null);
   }
 }
+
+// =============================
+// FOOD CHECK (Nutritionix)
+// =============================
 
 // GET /food/check?q=...
 export async function checkFoodNutritionix(query) {
@@ -172,6 +205,10 @@ export async function getFoodHistory() {
   });
 }
 
+// =============================
+// PRODUCT CHECK (Open Food Facts)
+// =============================
+
 // GET /products/search?q=...
 export async function searchProductsOFF(keyword) {
   const json = await apiFetch(
@@ -193,9 +230,11 @@ export async function searchProductsOFF(keyword) {
   }));
 }
 
+// =============================
+// RECIPES (Spoonacular wrapper)
+// =============================
 
-// GET Recipes – /recipes/diabetes, /recipes/search, /recipes/{id} 
-
+// GET /recipes/diabetes
 export async function getDiabetesRecipes(params = {}) {
   const qs = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
@@ -227,6 +266,7 @@ export async function getDiabetesRecipes(params = {}) {
   });
 }
 
+// GET /recipes/search?q=...
 export async function searchRecipes(query, limit = 10) {
   const qs = new URLSearchParams();
   qs.set("q", query);
@@ -256,10 +296,13 @@ export async function searchRecipes(query, limit = 10) {
   });
 }
 
+// GET /recipes/{id}
 export async function getRecipeDetail(id) {
   const json = await apiFetch(`/recipes/${id}`, { method: "GET" });
 
-  if (!json?.success || !json.item) throw new Error("Recipe not found");
+  if (!json?.success || !json.item) {
+    throw new Error("Recipe not found");
+  }
 
   const d = json.item.diabetes || {};
   const raw = json.item.raw || {};
