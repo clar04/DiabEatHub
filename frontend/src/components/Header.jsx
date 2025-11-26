@@ -13,6 +13,7 @@ import {
   UserRoundPlus,
   LogOut,
 } from "lucide-react";
+import logo from "../assets/logo.png";
 
 export default function Header() {
   const location = useLocation();
@@ -39,24 +40,30 @@ export default function Header() {
 
   const handleLogout = () => {
     if (!window.confirm("Logout dari akun ini?")) return;
-    logout(); // cuma hapus session, data profile per-username tetap tersimpan
+    logout();
     navigate("/login", { replace: true });
   };
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-brand-900/80 border-b border-line-200/40 shadow-lg shadow-brand-900/20">
       <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
-        {/* Logo */}
+        
+        {/* LOGO BULAT */}
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="size-8 rounded-xl bg-accent-600 flex items-center justify-center text-brand-700 font-bold shadow-md group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-accent-600/50 transition-all duration-300">
-            SM
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-surface-100 border border-line-200 overflow-hidden shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
+            <img
+              src={logo}
+              alt="Logo"
+              className="w-full h-full object-cover"
+            />
           </div>
+
           <span className="font-semibold text-white group-hover:text-accent-600 transition-colors duration-300">
-            Meal Planner
+            Smart Meal Checker
           </span>
         </Link>
 
-        {/* Nav */}
+        {/* NAVIGATION */}
         <nav className="hidden md:flex items-center gap-6 text-sm">
           {navLinks.map(({ to, label, icon: Icon }) => {
             const active = isActive(to);
@@ -88,7 +95,7 @@ export default function Header() {
           })}
         </nav>
 
-        {/* Auth area */}
+        {/* AUTH AREA */}
         <div className="flex items-center gap-3 text-sm">
           {loggedIn ? (
             <>
@@ -118,6 +125,7 @@ export default function Header() {
                 <LogIn className="w-4 h-4" />
                 <span>Login</span>
               </Link>
+
               <Link
                 to="/register"
                 className="rounded-xl bg-brand-700 text-white px-3 py-2 hover:bg-brand-800 hover:shadow-lg hover:shadow-brand-700/30 hover:scale-105 transition-all duration-300 font-medium flex items-center gap-1.5"
