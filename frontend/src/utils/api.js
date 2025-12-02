@@ -7,8 +7,6 @@ const DEFAULT_TIMEOUT_MS = 20000; // 20s
 // ==========================
 // BASE URL API BACKEND
 // ==========================
-// Ambil dari .env Vite: VITE_API_BASE_URL atau VITE_API_BASE
-// Kalau tidak ada, fallback ke http://127.0.0.1:8000/api
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_BASE ||
@@ -122,7 +120,6 @@ export async function apiFetch(path, options = {}) {
 // AUTH: register / login / me
 // =============================
 
-// POST /register → { success, user:{id,username}, token }
 export async function authRegister(username, password) {
   const data = await apiFetch("/register", {
     method: "POST",
@@ -132,7 +129,6 @@ export async function authRegister(username, password) {
   return data;
 }
 
-// POST /login → { success, user:{id,username}, token }
 export async function authLogin(username, password) {
   const data = await apiFetch("/login", {
     method: "POST",
@@ -142,12 +138,10 @@ export async function authLogin(username, password) {
   return data;
 }
 
-// GET /me
 export async function authMe() {
   return await apiFetch("/me", { method: "GET" });
 }
 
-// POST /logout
 export async function authLogout() {
   try {
     await apiFetch("/logout", { method: "POST" });
@@ -157,78 +151,71 @@ export async function authLogout() {
 }
 
 // =============================
-// FOOD CHECK (Nutritionix)
+// FOOD CHECK (Sekarang Unified Spoonacular)
 // =============================
 
 // GET /food/check?q=...
-export async function checkFoodNutritionix(query) {
+// Return: Single Object (karena backend mencari best match ingredient)
+export async function checkFood(query) {
   const json = await apiFetch(`/food/check?q=${encodeURIComponent(query)}`, {
     method: "GET",
   });
 
-  if (!json?.success || !Array.isArray(json.items)) return [];
-  return json.items.map((item) => ({
-    name: item.name,
-    serving: item.serving,
-    carbs: item.carbs_g,
-    sugar: item.sugar_g,
-    diabetesFlag: item.diabetes_flag,
-    notes: item.notes,
-    source: item.source,
-    raw: item,
-  }));
+  // Backend sekarang mengembalikan { success: true, data: { ... } }
+  // Kita kembalikan langsung object datanya
+  return json?.data || null;
 }
 
 // GET /history/food
 export async function getFoodHistory() {
   const json = await apiFetch("/history/food", { method: "GET" });
-  if (!json?.success || !Array.isArray(json.items)) return [];
-  return json.items.map((h) => {
+
+  // Backend returns { success: true, data: [...] }
+  // Kita map agar kompatibel dengan FoodCheckPanel history list
+  const list = json?.data || json?.items || [];
+
+  return list.map((h) => {
+    // result adalah JSON yang disimpan di DB (struktur baru dengan analysis)
     const r = h.result || {};
+    const analysis = r.analysis || {};
+
     return {
       id: h.id,
       query: h.query,
       createdAt: h.created_at,
-      updatedAt: h.updated_at,
-      result: {
-        name: r.name,
-        serving: r.serving,
-        carbs: r.carbs_g,
-        sugar: r.sugar_g,
-        diabetesFlag: r.diabetes_flag,
-        notes: r.notes,
-        source: r.source,
-        raw: r,
-      },
-      raw: h,
+
+      // Mapping untuk list UI
+      name: r.name,
+      unit: "1 serving",
+      carbs: r.carbs_g,
+      sugar: r.sugar_g,
+      diabetesFlag: analysis.label, // Ambil label dari analysis
+
+      // Simpan raw result untuk detail jika perlu
+      result: r,
     };
   });
 }
 
 // =============================
-// PRODUCT CHECK (Open Food Facts)
+// PRODUCT CHECK (Sekarang Spoonacular Products)
 // =============================
 
 // GET /products/search?q=...
+// Return: Single Object
 export async function searchProductsOFF(keyword) {
+  // Note: Nama fungsi saya biarkan searchProductsOFF agar tidak error di import lain, 
+  // tapi logicnya sudah pakai endpoint Spoonacular baru.
+
   const json = await apiFetch(
     `/products/search?q=${encodeURIComponent(keyword)}`,
     { method: "GET" }
   );
 
-  if (!json?.success || !Array.isArray(json.items)) return [];
-  return json.items.map((item) => ({
-    name: item.name,
-    serving: item.serving,
-    carbs: item.carbs_g,
-    sugar: item.sugar_g,
-    ingredients: item.ingredients,
-    diabetesFlag: item.diabetes_flag,
-    notes: item.notes,
-    source: item.source,
-    raw: item,
-  }));
+  // Backend mengembalikan { success: true, data: { ... } }
+  return json?.data || null;
 }
+
 
 // =============================
 // RECIPES (Spoonacular wrapper)
@@ -240,60 +227,16 @@ export async function getDiabetesRecipes(params = {}) {
   Object.entries(params).forEach(([k, v]) => {
     if (v !== undefined && v !== null && v !== "") qs.set(k, String(v));
   });
-  const queryStr = qs.toString() ? `?${qs.toString()}` : "";
 
-  const json = await apiFetch(`/recipes/diabetes${queryStr}`, {
+  const json = await apiFetch(`/recipes/diabetes?${qs.toString()}`, {
     method: "GET",
   });
 
+  // Backend list resep masih mengembalikan array di 'items'
   if (!json?.success || !Array.isArray(json.items)) return [];
-  return json.items.map((item) => {
-    const raw = item.raw || {};
-    const cookTime = item.ready_in_min ?? raw.readyInMinutes ?? null;
-    return {
-      id: raw.id ?? null,
-      title: raw.title || item.name,
-      image: raw.image || null,
-      cookTime,
-      carbs: item.carbs_g,
-      sugar: item.sugar_g,
-      diabetesFlag: item.diabetes_flag,
-      diabetesFriendly: item.diabetes_friendly,
-      notes: item.notes,
-      source: item.source,
-      raw,
-    };
-  });
-}
 
-// GET /recipes/search?q=...
-export async function searchRecipes(query, limit = 10) {
-  const qs = new URLSearchParams();
-  qs.set("q", query);
-  if (limit) qs.set("limit", String(limit));
-
-  const json = await apiFetch(`/recipes/search?${qs.toString()}`, {
-    method: "GET",
-  });
-
-  if (!json?.success || !Array.isArray(json.items)) return [];
-  return json.items.map((item) => {
-    const raw = item.raw || {};
-    const cookTime = item.ready_in_min ?? raw.readyInMinutes ?? null;
-    return {
-      id: raw.id ?? null,
-      title: raw.title || item.name,
-      image: raw.image || null,
-      cookTime,
-      carbs: item.carbs_g,
-      sugar: item.sugar_g,
-      diabetesFlag: item.diabetes_flag,
-      diabetesFriendly: item.diabetes_friendly,
-      notes: item.notes,
-      source: item.source,
-      raw,
-    };
-  });
+  // Pass-through items karena Controller sudah menormalisasi data
+  return json.items;
 }
 
 // GET /recipes/{id}
@@ -304,29 +247,8 @@ export async function getRecipeDetail(id) {
     throw new Error("Recipe not found");
   }
 
-  const d = json.item.diabetes || {};
-  const raw = json.item.raw || {};
-
-  const ingredientsArr = d.extendedIngredients || raw.extendedIngredients || [];
-  const ingredients = ingredientsArr.map((ing) => ing.original || ing.name);
-
-  const steps =
-    raw.analyzedInstructions?.[0]?.steps?.map((s) => s.step) ||
-    ["Instructions not available."];
-
-  return {
-    id: raw.id ?? null,
-    title: raw.title || d.name || "",
-    image: raw.image || null,
-    cookTime: raw.readyInMinutes ?? null,
-    servings: raw.servings ?? null,
-    carbs: d.carbs_g ?? 0,
-    sugar: d.sugar_g ?? 0,
-    diabetesFlag: d.diabetes_flag ?? null,
-    notes: d.notes ?? "",
-    source: d.source ?? "spoonacular",
-    ingredients,
-    steps,
-    raw,
-  };
+  // Backend mengembalikan struktur:
+  // { success: true, item: { diabetes: {...evaluated_data}, raw: {...spoonacular_raw} } }
+  // Kita kembalikan full object 'item' agar Frontend bisa akses item.diabetes.analysis
+  return json;
 }

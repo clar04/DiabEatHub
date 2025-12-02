@@ -2,14 +2,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\ApiNinjasNutritionService;
+use App\Services\SpoonacularService; // Ubah import service
 use App\Services\DiabetesRuleService;
 use App\Models\FoodCheck;
 
 class FoodController extends Controller
 {
     public function __construct(
-        protected ApiNinjasNutritionService $nutrition,
+        protected SpoonacularService $spoonacular, // Inject Spoonacular
         protected DiabetesRuleService $rules
     ) {}
 
@@ -19,18 +19,20 @@ class FoodController extends Controller
             'q' => 'required|string|max:100',
         ]);
 
-        $item = $this->nutrition->search($request->q);
+        // Panggil method searchIngredient dari SpoonacularService
+        $item = $this->spoonacular->searchIngredient($request->q);
 
         if (!$item) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch food data'
-            ], 502);
+                'message' => 'Food data not found in Spoonacular database.'
+            ], 404);
         }
 
         $evaluated = $this->rules->evaluate($item);
 
-        // save to db
+        // Save to DB
+        // Pastikan model FoodCheck memiliki 'casts' => ['result' => 'array'] jika ingin otomatis json_encode
         FoodCheck::create([
             'query' => $request->q,
             'result' => $evaluated,
@@ -38,7 +40,7 @@ class FoodController extends Controller
 
         return response()->json([
             'success' => true,
-            'items' => [$evaluated],
+            'data' => $evaluated, // Saya ubah key 'items' jadi 'data' karena isinya cuma 1 object
         ]);
     }
 
@@ -48,7 +50,7 @@ class FoodController extends Controller
 
         return response()->json([
             'success' => true,
-            'items' => $history,
+            'data' => $history, // Konsisten pakai key 'data'
         ]);
     }
 }

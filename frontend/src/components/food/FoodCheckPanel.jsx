@@ -10,28 +10,30 @@ import {
   removeFromLog,
   toDateKey,
 } from "../../utils/foodLog";
-import { checkFoodNutritionix } from "../../utils/api";
+// Pastikan di utils/api.js Anda sudah membuat fungsi checkFood yang memanggil endpoint backend '/api/food/check'
+import { checkFood } from "../../utils/api"; 
 
 function StatTile({ label, value }) {
   return (
-    <div className="rounded-xl bg-surface-100 border border-line-200 px-3 py-2 text-center">
-      <p className="text-xs text-ink-700">{label}</p>
-      <p className="font-semibold text-ink-900">{value}</p>
+    <div className="rounded-xl bg-surface-100 border border-line-200 px-3 py-2 text-center flex flex-col items-center justify-center h-full">
+      <p className="text-xs text-ink-700 mb-1">{label}</p>
+      <p className="font-semibold text-ink-900 text-sm">{value}</p>
     </div>
   );
 }
 
-// TERIMA PROP onAddSuccess DARI Food.jsx
 export default function FoodCheckPanel({ onAddSuccess }) {
   const [query, setQuery] = useState("");
   const [dateKey, setDateKey] = useState(toDateKey());
 
-  const [results, setResults] = useState([]);
+  // Backend Spoonacular mengembalikan 1 object detail, bukan array
+  const [result, setResult] = useState(null);
+  
   const [log, setLog] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  // load log saat tanggal berubah
+  // Load log saat tanggal berubah
   useEffect(() => {
     setLog(readLogByDate(dateKey));
   }, [dateKey]);
@@ -40,13 +42,16 @@ export default function FoodCheckPanel({ onAddSuccess }) {
     if (!query.trim()) return;
     setLoading(true);
     setErr("");
-    setResults([]);
+    setResult(null);
 
     try {
-      const foods = await checkFoodNutritionix(query);
-      setResults(foods);
-      if (!foods.length) {
-        setErr("Makanan tidak ditemukan di basis data.");
+      // Panggil API backend Laravel
+      const data = await checkFood(query);
+      
+      if (!data) {
+        setErr("Makanan tidak ditemukan di database Spoonacular.");
+      } else {
+        setResult(data);
       }
     } catch (e) {
       setErr(e.message || "Gagal mengambil data dari server.");
@@ -56,17 +61,19 @@ export default function FoodCheckPanel({ onAddSuccess }) {
   }
 
   function handleAdd(item) {
-    // Simpan ke log
+    // Simpan ke log local storage
+    // Perhatikan nama field disesuaikan dengan response backend baru (_g suffix)
     addToLog(dateKey, {
       name: item.name,
-      unit: item.serving,
-      carbs: item.carbs ?? 0,
-      sugar: item.sugar ?? 0,
-      diabetesFlag: item.diabetesFlag ?? null,
+      unit: "1 serving", // Spoonacular default serving
+      carbs: item.carbs_g ?? 0,
+      sugar: item.sugar_g ?? 0,
+      // Simpan label badge untuk ditampilkan di history list
+      diabetesFlag: item.analysis?.label || "Unknown", 
     });
     setLog(readLogByDate(dateKey));
 
-    // TRIGGER POPUP SUKSES (kalau dikirim dari parent)
+    // Trigger callback jika ada
     if (typeof onAddSuccess === "function") {
       onAddSuccess();
     }
@@ -77,18 +84,96 @@ export default function FoodCheckPanel({ onAddSuccess }) {
     setLog(readLogByDate(dateKey));
   }
 
+  // Helper untuk merender hasil pencarian (Single Item)
+  const renderResult = () => {
+    if (!result) return null;
+
+    const r = result;
+    const analysis = r.analysis || {};
+    
+    // Warna badge dari backend: 'green', 'yellow', 'red'
+    const tone = analysis.badge_color || "gray"; 
+    const label = analysis.label || "Check Result";
+
+    return (
+      <div className="rounded-2xl border border-line-200 bg-surface-100 p-5 animate-fade-in">
+        {/* Header Hasil */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+          <div className="flex gap-4">
+            {r.image && (
+                <img 
+                    src={r.image} 
+                    alt={r.name} 
+                    className="w-16 h-16 object-cover rounded-lg border border-line-200 bg-white"
+                />
+            )}
+            <div>
+              <p className="font-bold text-ink-900 text-xl capitalize leading-tight">{r.name}</p>
+              <p className="text-xs text-ink-600 mt-1">
+                Kalori: <span className="font-semibold">{r.calories} kcal</span>
+              </p>
+              
+              {/* Menampilkan Notes dari DiabetesRuleService */}
+              {analysis.notes && analysis.notes.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {analysis.notes.map((note, idx) => (
+                    <li key={idx} className="text-xs text-ink-700 flex items-start gap-1.5">
+                       <span className="text-brand-600 mt-0.5">•</span> {note}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex-shrink-0">
+             <Badge tone={tone} size="lg">{label}</Badge>
+          </div>
+        </div>
+
+        {/* Grid Nutrisi */}
+        <div className="mt-5 grid grid-cols-4 gap-2">
+          <StatTile label="Carbs" value={`${r.carbs_g} g`} />
+          <StatTile label="Sugar" value={`${r.sugar_g} g`} />
+          <StatTile label="Fiber" value={`${r.fiber_g} g`} />
+          <StatTile label="Sodium" value={`${r.sodium_mg} mg`} />
+        </div>
+        
+        {/* Detail Lemak (Opsional, buat visual lebih lengkap) */}
+        <div className="mt-2 grid grid-cols-3 gap-2 px-1">
+           <div className="text-[10px] text-center text-ink-500">
+             Fat: {r.fat_g}g
+           </div>
+           <div className="text-[10px] text-center text-ink-500">
+             Sat. Fat: {r.saturated_fat_g}g
+           </div>
+           <div className="text-[10px] text-center text-ink-500">
+             Protein: {r.protein_g}g
+           </div>
+        </div>
+
+        {/* Tombol Add */}
+        <div className="mt-5 border-t border-line-200 pt-4 flex justify-end">
+          <Button variant="soft" onClick={() => handleAdd(r)}>
+            + Add to Daily Log
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-5xl mx-auto">
       <Card className="p-5">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
             <Label htmlFor="q" className="text-ink-900">
-              Food Search
+              Cari Makanan (Bahan & Menu Umum)
             </Label>
             <div className="mt-1 flex gap-2">
               <Input
                 id="q"
-                placeholder="ketik nama menu: rice, cake, sweet iced tea, dll"
+                placeholder="Ex: Nasi Goreng, Apple, Grilled Chicken"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && doSearch()}
@@ -97,10 +182,13 @@ export default function FoodCheckPanel({ onAddSuccess }) {
                 Cek
               </Button>
             </div>
+            <p className="text-[11px] text-ink-500 mt-1.5 ml-1">
+              Powered by Spoonacular. Gunakan bahasa Inggris untuk hasil terbaik (misal: "Fried Rice").
+            </p>
           </div>
 
           <div>
-            <Label className="text-ink-900">Tanggal</Label>
+            <Label className="text-ink-900">Tanggal Log</Label>
             <Input
               type="date"
               className="mt-1"
@@ -110,106 +198,76 @@ export default function FoodCheckPanel({ onAddSuccess }) {
           </div>
         </div>
 
-        {/* Hasil pencarian */}
-        <div className="mt-5">
+        {/* Area Hasil Pencarian */}
+        <div className="mt-6 min-h-[100px]">
           {loading && (
-            <p className="text-sm text-ink-700">Mengambil data dari server…</p>
+            <div className="flex items-center justify-center py-8 text-sm text-ink-700">
+              <span className="animate-pulse">Sedang menganalisis nutrisi...</span>
+            </div>
           )}
+          
           {err && !loading && (
-            <p className="text-sm text-red-600">Error: {err}</p>
+            <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-sm text-red-600">
+              {err}
+            </div>
           )}
 
-          {!loading && !err && results.length === 0 && (
-            <p className="text-sm text-ink-700">
-              Ketik nama makanan lalu tekan{" "}
-              <span className="font-medium">Cek</span>.
-            </p>
+          {!loading && !err && !result && (
+            <div className="text-center py-8 text-sm text-ink-500 border-2 border-dashed border-line-200 rounded-xl">
+              Hasil analisis nutrisi & diabetes akan muncul di sini.
+            </div>
           )}
 
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
-            {results.map((r, idx) => {
-              const carbs = r.carbs ?? 0;
-              const sugar = r.sugar ?? 0;
-              const flag = r.diabetesFlag || "";
-
-              const tone =
-                flag === "High Sugar"
-                  ? "red"
-                  : flag === "Watch Carbs"
-                  ? "yellow"
-                  : "green";
-
-              const label = flag || "OK";
-
-              return (
-                <div
-                  key={idx}
-                  className="rounded-2xl border border-line-200 bg-surface-100 p-4"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-ink-900">{r.name}</p>
-                      <p className="text-xs text-ink-700">
-                        Serving: {r.serving}
-                      </p>
-                      {r.notes && (
-                        <p className="mt-1 text-xs text-ink-700">{r.notes}</p>
-                      )}
-                    </div>
-                    <Badge tone={tone}>{label}</Badge>
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
-                    <StatTile label="Carbs" value={`${carbs.toFixed(1)} g`} />
-                    <StatTile label="Sugar" value={`${sugar.toFixed(1)} g`} />
-                    {r.source && <StatTile label="Source" value={r.source} />}
-                  </div>
-
-                  <div className="mt-3">
-                    <Button variant="soft" onClick={() => handleAdd(r)}>
-                      + Add to log
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          {!loading && !err && result && renderResult()}
         </div>
 
-        {/* Log list */}
-        <div className="mt-6">
-          <h3 className="text-sm font-semibold text-ink-900 mb-2">
-            Log Makanan ({dateKey})
-          </h3>
+        {/* List Log Harian */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+             <h3 className="text-sm font-bold text-ink-900">
+                Log Makanan ({dateKey})
+             </h3>
+             <span className="text-xs text-ink-500 bg-surface-100 px-2 py-1 rounded-md">
+                {log.length} items
+             </span>
+          </div>
+
           {log.length === 0 ? (
-            <p className="text-sm text-ink-700">
-              Belum ada makanan untuk tanggal ini.
+            <p className="text-sm text-ink-700 italic">
+              Belum ada makanan dicatat hari ini.
             </p>
           ) : (
             <div className="space-y-3">
               {log.map((it, idx) => (
                 <div
                   key={idx}
-                  className="rounded-xl border border-line-200 bg-surface px-3 py-2 flex items-center justify-between gap-2"
+                  className="rounded-xl border border-line-200 bg-surface px-4 py-3 flex items-center justify-between gap-3 transition-colors hover:border-brand-200"
                 >
                   <div className="min-w-0">
-                    <p className="text-ink-900 font-medium truncate">
+                    <p className="text-ink-900 font-medium truncate capitalize">
                       {it.name}
                     </p>
-                    <p className="text-xs text-ink-700">
-                      {it.unit} • Carbs {it.carbs ?? 0} g • Sugar{" "}
-                      {it.sugar ?? 0} g
+                    <p className="text-xs text-ink-600 mt-0.5">
+                       Carbs: {it.carbs}g • Sugar: {it.sugar}g
                     </p>
+                    
+                    {/* Badge Kecil di Log */}
                     {it.diabetesFlag && (
-                      <p className="text-[11px] text-ink-700/80">
+                      <span className={`
+                        inline-block mt-1.5 text-[10px] px-1.5 py-0.5 rounded border 
+                        ${it.diabetesFlag === 'Ramah Diabetes' || it.diabetesFlag === 'Diabetes Friendly' 
+                            ? 'bg-green-50 text-green-700 border-green-100' 
+                            : 'bg-surface-200 text-ink-600 border-line-200'}
+                      `}>
                         {it.diabetesFlag}
-                      </p>
+                      </span>
                     )}
                   </div>
+                  
                   <button
-                    className="text-ink-700/70 hover:text-ink-900 text-sm"
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-ink-400 hover:text-red-600 hover:bg-red-50 transition-all"
                     onClick={() => handleRemove(idx)}
-                    title="Hapus"
+                    title="Hapus item"
                   >
                     ✕
                   </button>

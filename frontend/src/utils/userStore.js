@@ -25,8 +25,6 @@ export function registerUser(username, password) {
   }
   users[username] = {
     username,
-    // NOTE: untuk belajar, password disimpan apa adanya.
-    // Di BE beneran HARUS di-hash.
     password,
   };
   writeUsers(users);

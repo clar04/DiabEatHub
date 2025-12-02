@@ -2,13 +2,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\OpenFoodFactsService;
+use App\Services\SpoonacularService; // Ubah import service
 use App\Services\DiabetesRuleService;
 
 class ProductController extends Controller
 {
     public function __construct(
-        protected OpenFoodFactsService $off,
+        protected SpoonacularService $spoonacular, // Inject Spoonacular
         protected DiabetesRuleService $rules
     ) {}
 
@@ -18,13 +18,23 @@ class ProductController extends Controller
             'q' => 'required|string|max:100',
         ]);
 
-        $products = $this->off->search($request->q);
+        // Gunakan method searchProduct dari SpoonacularService
+        // Ini akan mengembalikan 1 object produk lengkap (atau null)
+        $product = $this->spoonacular->searchProduct($request->q);
 
-        $evaluated = array_map(fn($p) => $this->rules->evaluate($p), $products);
+        if (!$product) {
+             return response()->json([
+                'success' => false,
+                'message' => 'Product not found in Spoonacular database.'
+            ], 404);
+        }
+
+        // Evaluasi produk tersebut dengan rules diabetes baru
+        $evaluated = $this->rules->evaluate($product);
 
         return response()->json([
             'success' => true,
-            'items' => $evaluated,
+            'data' => $evaluated, 
         ]);
     }
 }
