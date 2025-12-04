@@ -44,16 +44,8 @@ export default function About() {
           {/* Badge sumber API */}
           <div className="mt-3 flex flex-wrap gap-2 text-xs sm:text-sm">
             <span className="inline-flex items-center gap-1 rounded-full bg-surface-100 px-3 py-1 border border-line-200 text-ink-900">
-              <UtensilsCrossed className="w-4 h-4 stroke-brand-800" />
-              <span>Nutritionix</span>
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-surface-100 px-3 py-1 border border-line-200 text-ink-900">
               <Salad className="w-4 h-4 stroke-brand-800" />
               <span>Spoonacular</span>
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-surface-100 px-3 py-1 border border-line-200 text-ink-900">
-              <Package className="w-4 h-4 stroke-brand-800" />
-              <span>Open Food Facts</span>
             </span>
           </div>
 

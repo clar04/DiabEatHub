@@ -22,7 +22,6 @@ export default function Header() {
   const { profile } = useProfile();
 
   const loggedIn = !!currentUser;
-  const displayName = profile?.username || currentUser || "Guest";
 
   const navLinks = [
     { to: "/", label: "About", icon: Info },
@@ -45,63 +44,60 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-brand-900/80 border-b border-line-200/40 shadow-lg shadow-brand-900/20">
-      <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
-        
-        {/* LOGO BULAT */}
+    <header className="
+      sticky top-0 z-50 
+      bg-gradient-to-r from-brand-900/90 via-brand-800/90 to-brand-900/90 
+      backdrop-blur-md border-b border-line-200/40
+      shadow-lg shadow-brand-900/25
+    ">
+      <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-3">
+
+        {/* LEFT — Logo */}
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-surface-100 border border-line-200 overflow-hidden shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
-            <img
-              src={logo}
-              alt="Logo"
-              className="w-full h-full object-cover"
-            />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-surface-100/90 
+              border border-line-200/70 overflow-hidden shadow-md 
+              group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
+            <img src={logo} alt="Logo" className="w-full h-full object-cover" />
           </div>
 
-          <span className="font-semibold text-white group-hover:text-accent-600 transition-colors duration-300">
+          <span className="font-semibold text-white text-base group-hover:text-accent-400 transition-colors duration-300">
             Smart Meal Checker
           </span>
         </Link>
 
-        {/* NAVIGATION */}
-        <nav className="hidden md:flex items-center gap-6 text-sm">
-          {navLinks.map(({ to, label, icon: Icon }) => {
-            const active = isActive(to);
-            return (
-              <Link
-                key={to}
-                to={to}
-                className={
-                  "group relative flex items-center gap-1.5 px-1 py-1 transition-all duration-300 " +
-                  (active
-                    ? "text-brand-100 font-medium"
-                    : "text-white/80 hover:text-white hover:scale-105")
-                }
-              >
-                <Icon className="w-4 h-4" />
-                <span>{label}</span>
-
-                {/* underline */}
-                <span
+        {/* CENTER — Navigation */}
+        <nav className="hidden md:flex items-center">
+          <div className="flex items-center gap-1 rounded-full bg-brand-800/70 px-2 py-1 border border-brand-700/60">
+            {navLinks.map(({ to, label, icon: Icon }) => {
+              const active = isActive(to);
+              return (
+                <Link
+                  key={to}
+                  to={to}
                   className={
-                    "absolute bottom-0 left-0 right-0 h-0.5 rounded-full transform origin-left transition-transform duration-300 " +
+                    "group flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all duration-200 " +
                     (active
-                      ? "bg-accent-600 scale-x-100 shadow-sm shadow-accent-600/50"
-                      : "bg-white/30 scale-x-0 group-hover:scale-x-100")
+                      ? "bg-accent-500 text-brand-900 font-semibold shadow shadow-accent-500/40"
+                      : "text-brand-50/80 hover:text-white hover:bg-brand-700/70")
                   }
-                />
-              </Link>
-            );
-          })}
+                >
+                  <Icon className="w-4 h-4 opacity-90" />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
-        {/* AUTH AREA */}
-        <div className="flex items-center gap-3 text-sm">
+        {/* RIGHT — Auth Buttons */}
+        <div className="flex items-center gap-2 text-sm">
           {loggedIn ? (
             <>
               <Link
                 to="/profile"
-                className="rounded-xl bg-brand-700 text-white px-3 py-2 hover:bg-brand-800 hover:shadow-lg hover:shadow-brand-700/30 hover:scale-105 transition-all duration-300 font-medium flex items-center gap-1.5"
+                className="rounded-full bg-brand-700 text-white px-3 py-1.5 
+                  hover:bg-brand-800 hover:shadow-lg hover:shadow-brand-700/40 
+                  hover:-translate-y-[1px] transition-all duration-200 flex items-center gap-1.5"
               >
                 <UserRoundPlus className="w-4 h-4" />
                 <span>Profile</span>
@@ -110,7 +106,9 @@ export default function Header() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="rounded-xl border border-line-200 px-3 py-2 text-surface-100 hover:bg-line-200/20 hover:border-line-200/60 hover:scale-105 transition-all duration-300 flex items-center gap-1.5"
+                className="rounded-full border border-line-200/70 px-3 py-1.5 text-surface-100 
+                  hover:bg-line-200/15 hover:border-line-200 hover:shadow-md 
+                  hover:-translate-y-[1px] transition-all duration-200 flex items-center gap-1.5"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Logout</span>
@@ -120,7 +118,9 @@ export default function Header() {
             <>
               <Link
                 to="/login"
-                className="rounded-xl border border-line-200 px-3 py-2 text-surface-100 hover:bg-line-200/20 hover:border-line-200/60 hover:scale-105 transition-all duration-300 flex items-center gap-1.5"
+                className="rounded-full border border-line-200/70 px-3 py-1.5 text-surface-100 
+                  hover:bg-line-200/15 hover:border-line-200 hover:shadow-md 
+                  hover:-translate-y-[1px] transition-all duration-200 flex items-center gap-1.5"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Login</span>
@@ -128,7 +128,9 @@ export default function Header() {
 
               <Link
                 to="/register"
-                className="rounded-xl bg-brand-700 text-white px-3 py-2 hover:bg-brand-800 hover:shadow-lg hover:shadow-brand-700/30 hover:scale-105 transition-all duration-300 font-medium flex items-center gap-1.5"
+                className="rounded-full bg-accent-500 text-brand-900 px-3 py-1.5 
+                  hover:bg-accent-400 hover:shadow-lg hover:shadow-accent-500/40 
+                  hover:-translate-y-[1px] transition-all duration-200 font-semibold flex items-center gap-1.5"
               >
                 <UserRoundPlus className="w-4 h-4" />
                 <span>Register</span>

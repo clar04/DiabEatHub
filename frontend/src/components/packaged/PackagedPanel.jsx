@@ -11,7 +11,7 @@ import { searchProductsOFF } from "../../utils/api";
 function NutrientBox({ label, val, unit }) {
   return (
       <div className="rounded-xl bg-surface px-2 py-2 border border-line-200 text-center flex flex-col items-center justify-center">
-          <p className="text-[10px] text-ink-500 mb-0.5 uppercase tracking-wider">{label}</p>
+          <p className="text-[10px] text-ink-900 mb-0.5 uppercase tracking-wider">{label}</p>
           <p className="font-semibold text-ink-900 text-sm">
               {val != null ? `${val} ${unit}` : "-"}
           </p>
@@ -79,13 +79,13 @@ export default function PackagedPanel() {
               <div>
                   <h3 className="font-bold text-ink-900 text-lg leading-tight">{item.name}</h3>
                   {item.brand && (
-                    <p className="text-sm text-ink-600 font-medium">{item.brand}</p>
+                    <p className="text-sm text-ink-900 font-medium">{item.brand}</p>
                   )}
                   {/* Tampilkan Notes jika ada */}
                   {analysis.notes && analysis.notes.length > 0 && (
                       <ul className="mt-2 space-y-1">
                         {analysis.notes.map((note, idx) => (
-                           <li key={idx} className="text-xs text-ink-700 flex items-start gap-1">
+                           <li key={idx} className="text-xs text-ink-900 flex items-start gap-1">
                              <span className="text-brand-600">•</span> {note}
                            </li>
                         ))}
@@ -110,7 +110,7 @@ export default function PackagedPanel() {
         </div>
 
         {/* Info Tambahan */}
-        <div className="text-[10px] text-ink-400 text-center flex justify-center gap-4 border-t border-line-200 pt-2 mt-1">
+        <div className="text-[11px] text-ink-900 text-center flex justify-center gap-4 border-t border-line-200 pt-2 mt-1">
             <span>Fat: {item.fat_g}g</span>
             <span>Sat. Fat: {item.saturated_fat_g}g</span>
             <span>Protein: {item.protein_g}g</span>
@@ -138,7 +138,7 @@ export default function PackagedPanel() {
               Cek
             </Button>
           </div>
-          <p className="mt-2 text-[11px] text-ink-500">
+          <p className="mt-2 text-[11px] text-ink-900">
             Powered by <span className="font-semibold">Spoonacular</span>. Masukkan nama merek spesifik untuk hasil terbaik.
           </p>
         </div>
@@ -167,7 +167,7 @@ export default function PackagedPanel() {
 
       <div className="mt-6 min-h-[120px]">
         {loading && (
-          <div className="flex items-center justify-center py-8 text-sm text-ink-700 animate-pulse">
+          <div className="flex items-center justify-center py-8 text-sm text-ink-800 animate-pulse">
             Menganalisis nutrisi produk...
           </div>
         )}
@@ -179,7 +179,7 @@ export default function PackagedPanel() {
         )}
 
         {!loading && !err && !item && (
-          <div className="text-center py-8 text-sm text-ink-400 border-2 border-dashed border-line-200 rounded-xl">
+          <div className="text-center py-8 text-sm text-ink-900 border-2 border-dashed border-line-200 rounded-xl">
              Hasil pencarian produk akan muncul di sini.
           </div>
         )}

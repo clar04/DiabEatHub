@@ -14,7 +14,7 @@ function todayKey() {
 function Tile({ label, value }) {
   return (
     <div className="rounded-xl bg-surface-100 border border-line-200 px-3 py-2 text-center">
-      <p className="text-sm text-ink-700">{label}</p>
+      <p className="text-sm text-ink-900">{label}</p>
       <p className="font-semibold text-ink-900">{value}</p>
     </div>
   );
