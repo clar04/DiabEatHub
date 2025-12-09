@@ -1,25 +1,31 @@
 // src/pages/Home.jsx
-import Card from "../components/ui/Card";
+import { useState } from "react";
 import { useProfile } from "../state/ProfileContext";
 import { useGoal } from "../state/GoalContext";
-import {
-  mifflinStJeor,
-  adjustCalories,
-  statusTitle,
-  focusAdvice,
-} from "../utils/calorieCalc";
-import { Link } from "react-router-dom";
-import { isProfileReady } from "../utils/ensureProfile";
-import DailySummary from "../components/home/DailySummary";
+import { mifflinStJeor, adjustCalories } from "../utils/calorieCalc";
 import { toDateKey } from "../utils/foodLog";
-import { Flame, Activity, Target, HeartPulse } from "lucide-react";
+import { isProfileReady } from "../utils/ensureProfile";
+
+// Page tabs
+import Food from "./Food";
+import Recipes from "./Recipes";
+import Packaged from "./Packaged";
+import MealPlan from "./MealPlan";
+import ProfilePage from "./Profile";
+import History from "./History";
+import About from "./About";
+
+// Daily summary card
+import DailySummary from "../components/home/DailySummary";
 
 export default function Home() {
   const { profile } = useProfile();
   const { settings, setSettings } = useGoal();
 
-  // nama buat sapaan
-  const displayName = profile?.username || "there";
+  const [activeTab, setActiveTab] = useState("food");
+
+  const todayKey = toDateKey();
+  const profileOk = isProfileReady(profile);
 
   const safe = {
     sex: profile?.sex ?? "male",
@@ -48,185 +54,115 @@ export default function Home() {
 
   const tdee = Math.round(bmr * factor);
   const target = Math.round(adjustCalories(tdee, settings.goal));
-  const title = statusTitle(settings.goal);
-  const focus = focusAdvice(settings.goal);
 
-  const todayKey = toDateKey();
+  const handleGoalChange = (e) => {
+    setSettings((prev) => ({
+      ...prev,
+      goal: e.target.value,
+    }));
+  };
 
   return (
-    <section>
-      {/* Sapaan + avatar lebih besar biar berasa hero section */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-12 h-12 rounded-full bg-accent-600/80 flex items-center justify-center text-brand-800 font-semibold shadow-md">
-          {displayName[0]?.toUpperCase() || "U"}
-        </div>
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white">
-            Hi, {displayName} 👋
-          </h1>
-          <p className="mt-1 text-sm sm:text-base text-surface-200/90">
-            Ini ringkasan target kalori dan aktivitasmu hari ini.
-          </p>
-        </div>
-      </div>
+    <section className="space-y-8">
+      {/* =============== HERO =============== */}
+      <div className="relative rounded-3xl bg-gradient-to-r from-brand-800 to-brand-700 p-10 text-white overflow-hidden">
+        <h1 className="text-4xl font-bold">Smart Meal Checker</h1>
+        <p className="mt-2 text-white/90">
+          Manage your diet, regulate calories and get a healthy body
+        </p>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2 p-6">
-          <div className="flex items-center justify-between gap-3">
+        {/* Goal Card */}
+        <div className="mt-8 bg-white rounded-2xl p-6 flex items-center justify-between shadow">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-xl">
+              🎯
+            </div>
+
             <div>
-              <h2 className="text-base font-semibold text-ink-900">
-                Your Goal
-              </h2>
-              <p className="mt-1 text-sm text-ink-700">
-                Atur aktivitas & tujuan. Data profil (jenis kelamin, usia,
-                tinggi, berat) di halaman{" "}
-                <Link to="/profile" className="underline">
-                  Profile
-                </Link>
-                .
+              <div className="flex items-center gap-3">
+                <p className="text-sm font-medium text-ink-700">Your Goal</p>
+
+                <select
+                  value={settings.goal}
+                  onChange={handleGoalChange}
+                  className="
+                    bg-emerald-100
+                    text-emerald-900
+                    px-4 py-1.5
+                    rounded-full
+                    text-sm
+                    font-medium
+                    outline-none
+                    cursor-pointer
+                  "
+                >
+                  <option value="loss">Weight Loss</option>
+                  <option value="maintain">Maintain</option>
+                  <option value="gain">Muscle Gain</option>
+                </select>
+              </div>
+
+              <p className="mt-2 text-sm text-ink-700">
+                Know your daily calories to keep your body healthy.
               </p>
             </div>
-            {/* Icon kecil di kanan judul */}
-            <div className="hidden sm:flex w-10 h-10 rounded-xl bg-accent-600/20 items-center justify-center">
-              <HeartPulse
-                className="w-5 h-5 stroke-brand-800"
-                aria-hidden="true"
-              />
-            </div>
           </div>
-
-          <hr className="my-4 border-line-200" />
-
-          {!isProfileReady(profile) && (
-            <div className="mb-4 rounded-xl border border-line-200 bg-surface-100 p-3 text-sm text-ink-700">
-              Lengkapi profil untuk hasil yang akurat. Buka{" "}
-              <Link to="/profile" className="underline">
-                halaman Profile
-              </Link>
-              .
-            </div>
-          )}
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="activity"
-                className="text-sm font-medium text-ink-900"
-              >
-                Aktivitas
-              </label>
-              <select
-                id="activity"
-                className="mt-1 w-full rounded-xl border border-line-200 bg-surface-100 px-3 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-brand-100 focus:border-brand-500 text-ink-900"
-                value={settings.activity}
-                onChange={(e) =>
-                  setSettings((s) => ({ ...s, activity: e.target.value }))
-                }
-              >
-                <option value="sedentary">Sedentary (1–2k langkah)</option>
-                <option value="light">Light (jalan santai 2–3×/mgg)</option>
-                <option value="moderate">Moderate (3–5× olahraga)</option>
-                <option value="active">Active (6–7× olahraga)</option>
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="goal"
-                className="text-sm font-medium text-ink-900"
-              >
-                Tujuan
-              </label>
-              <select
-                id="goal"
-                className="mt-1 w-full rounded-xl border border-line-200 bg-surface-100 px-3 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-brand-100 focus:border-brand-500 text-ink-900"
-                value={settings.goal}
-                onChange={(e) =>
-                  setSettings((s) => ({ ...s, goal: e.target.value }))
-                }
-              >
-                <option value="maintain">Maintain</option>
-                <option value="loss_light">Weight Loss (−300 kcal)</option>
-                <option value="loss_std">Weight Loss (−500 kcal)</option>
-                <option value="gain_light">Muscle Gain (+200 kcal)</option>
-                <option value="gain_std">Muscle Gain (+300 kcal)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Tiga kartu BMR / TDEE / Target dengan ikon */}
-          <div className="mt-5 grid gap-3 sm:grid-cols-3 text-sm">
-            <div className="rounded-xl border border-line-200 bg-surface-100 p-3 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-accent-600/25 flex items-center justify-center">
-                <Flame
-                  className="w-5 h-5 stroke-brand-800"
-                  aria-hidden="true"
-                />
-              </div>
-              <div>
-                <p className="text-ink-700">BMR</p>
-                <p className="text-lg font-semibold text-ink-900">
-                  {bmr.toLocaleString()} kcal
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-line-200 bg-surface-100 p-3 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-accent-600/25 flex items-center justify-center">
-                <Activity
-                  className="w-5 h-5 stroke-brand-800"
-                  aria-hidden="true"
-                />
-              </div>
-              <div>
-                <p className="text-ink-700">TDEE (maintain)</p>
-                <p className="text-lg font-semibold text-ink-900">
-                  {tdee.toLocaleString()} kcal
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-line-200 bg-surface-100 p-3 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-accent-600/25 flex items-center justify-center">
-                <Target
-                  className="w-5 h-5 stroke-brand-800"
-                  aria-hidden="true"
-                />
-              </div>
-              <div>
-                <p className="text-ink-700">Target harian</p>
-                <p className="text-lg font-semibold text-ink-900">
-                  {target.toLocaleString()} kcal
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 flex flex-col justify-center relative overflow-hidden">
-          {/* dekor bulat samar biar card nggak polos */}
-          <div className="pointer-events-none absolute -right-12 -top-12 w-32 h-32 rounded-full bg-accent-600/10" />
-          <p className="text-xs text-ink-700 font-medium">Status</p>
-          <p className="mt-1 text-3xl font-semibold leading-tight text-ink-900">
-            {title}
-          </p>
-          <p className="mt-2 text-sm text-ink-700">
-            Target harian{" "}
-            <span className="font-semibold text-ink-900">
-              {target.toLocaleString()} kcal
-            </span>
-            .<br />
-            {focus}
-          </p>
-          <p className="mt-3 text-xs text-ink-700">
-            * Perkiraan umum, bukan nasihat medis.
-          </p>
-        </Card>
+        </div>
       </div>
 
-      {/* Daily summary */}
-      <div className="mt-6">
-        <DailySummary dateKey={todayKey} targetKcal={target || 2000} />
+      {/* =============== INFO + DAILY SUMMARY =============== */}
+      <div className="space-y-3">
+        {/* Peringatan isi profil – text saja, tanpa card kuning */}
+        {!profileOk && (
+          <p className="text-l text-white-900 font-semibold">
+            Lengkapi data di tab <span className="font-bold ">Profile</span>{" "}
+            (tinggi badan, berat badan, usia, aktivitas) supaya target kalori,
+            carbs, dan sugar lebih akurat.
+          </p>
+        )}
+
+        {/* Daily Summary card (otomatis pakai target dari GoalContext) */}
+        <DailySummary dateKey={todayKey} />
+      </div>
+
+      {/* =============== MAIN PANEL (TABS) =============== */}
+      <div className="bg-white rounded-3xl p-8 shadow">
+        {/* Tabs */}
+        <div className="flex gap-6 border-b text-sm">
+          {[
+            ["food", "Food Check"],
+            ["recipes", "Recipes"],
+            ["packaged", "Packaged Product"],
+            ["mealplan", "Meal Plan"],
+            ["profile", "Profile"],
+            ["history", "History"],
+            ["about", "About"],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveTab(key)}
+              className={`pb-3 ${
+                activeTab === key
+                  ? "text-brand-800 border-b-2 border-brand-600 font-medium"
+                  : "text-ink-900 hover:text-brand-700"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab content */}
+        <div className="mt-6">
+          {activeTab === "food" && <Food />}
+          {activeTab === "recipes" && <Recipes />}
+          {activeTab === "packaged" && <Packaged />}
+          {activeTab === "mealplan" && <MealPlan />}
+          {activeTab === "profile" && <ProfilePage />}
+          {activeTab === "history" && <History />}
+          {activeTab === "about" && <About />}
+        </div>
       </div>
     </section>
   );

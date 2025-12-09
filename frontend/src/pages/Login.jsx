@@ -1,5 +1,7 @@
+// src/pages/Login.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { LogIn } from "lucide-react";
 
 import Card from "../components/ui/Card";
 import Label from "../components/ui/Label";
@@ -37,6 +39,7 @@ export default function Login() {
 
       const data = await authLogin(username, password);
       login(data.user, data.token);
+
       try {
         const me = await authMe();
         setProfile({
@@ -56,7 +59,8 @@ export default function Login() {
         });
       }
 
-      navigate("/profile", { replace: true });
+      // ⬇️ setelah login → langsung ke /home
+      navigate("/home", { replace: true });
     } catch (err) {
       console.error("[LOGIN] failed:", err);
       alert(err?.message || "Login gagal");
@@ -66,24 +70,31 @@ export default function Login() {
   };
 
   return (
-    <section className="mx-auto max-w-lg px-4 py-10 sm:py-14">
-      <Card className="p-6 sm:p-7">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-ink-900">
-          Login untuk Mulai
-        </h1>
-
-        <p className="mt-2 text-sm text-ink-700">
-          Masuk dengan <span className="font-semibold">username</span> dan{" "}
-          <span className="font-semibold">password</span> yang sudah kamu buat di
-          halaman Register.
-        </p>
-
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+    <section className="mx-auto max-w-xl px-4 py-14">
+      <Card className="rounded-[32px] px-8 py-10 shadow-xl bg-white">
+        {/* Header sign in dengan ikon */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-11 h-11 rounded-full bg-emerald-50 flex items-center justify-center">
+            <LogIn className="w-5 h-5 text-emerald-600" />
+          </div>
           <div>
-            <Label htmlFor="username" className="text-ink-900">Username</Label>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">
+              Sign In
+            </h1>
+            <p className="text-sm text-slate-500">
+              Masuk untuk mengakses Smart Meal Checker.
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="username" className="text-slate-900">
+              Username
+            </Label>
             <Input
               id="username"
-              className="mt-1 text-ink-900 placeholder:text-ink-600"
+              className="mt-1 text-slate-900 placeholder:text-slate-400 bg-white border border-slate-200 rounded-xl h-11"
               placeholder="mis. ethan123"
               value={form.username}
               onChange={handleChange("username")}
@@ -92,11 +103,13 @@ export default function Login() {
           </div>
 
           <div>
-            <Label htmlFor="password" className="text-ink-900">Password</Label>
+            <Label htmlFor="password" className="text-slate-900">
+              Password
+            </Label>
             <Input
               id="password"
               type="password"
-              className="mt-1 text-ink-900 placeholder:text-ink-600"
+              className="mt-1 text-slate-900 placeholder:text-slate-400 bg-white border border-slate-200 rounded-xl h-11"
               placeholder="••••••••"
               value={form.password}
               onChange={handleChange("password")}
@@ -104,17 +117,20 @@ export default function Login() {
             />
           </div>
 
+          {/* Button mirip button "Check" di FoodCheck */}
           <Button
             type="submit"
             disabled={loading}
-            className="mt-4 w-full bg-brand-700 text-black hover:bg-brand-800 disabled:opacity-60"
+            className="mt-4 w-full h-11 rounded-full bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {loading ? "Masuk..." : "Masuk"}
+            {loading ? "Signing in..." : "Sign In"}
           </Button>
 
-          <p className="mt-3 text-xs text-ink-700">
+          <p className="mt-4 text-xs text-slate-600 text-center">
             Belum punya akun?{" "}
-            <Link to="/register" className="underline">Daftar di sini</Link>.
+            <Link to="/register" className="font-semibold text-emerald-700">
+              Register
+            </Link>
           </p>
         </form>
       </Card>

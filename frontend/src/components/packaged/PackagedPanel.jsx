@@ -2,29 +2,26 @@ import { useState } from "react";
 import Card from "../ui/Card";
 import Label from "../ui/Label";
 import Input from "../ui/Input";
-import Button from "../ui/Button";
 import Badge from "../ui/Badge";
-import { searchProductsOFF } from "../../utils/api"; 
-// Note: Kita tetap pakai nama fungsi import yang sama dari api.js, 
-// meskipun internal-nya sekarang memanggil Spoonacular.
+import { searchProductsOFF } from "../../utils/api";
 
+/* ================= Nutrient Box ================= */
 function NutrientBox({ label, val, unit }) {
   return (
-      <div className="rounded-xl bg-surface px-2 py-2 border border-line-200 text-center flex flex-col items-center justify-center">
-          <p className="text-[10px] text-ink-900 mb-0.5 uppercase tracking-wider">{label}</p>
-          <p className="font-semibold text-ink-900 text-sm">
-              {val != null ? `${val} ${unit}` : "-"}
-          </p>
-      </div>
-  )
+    <div className="rounded-2xl bg-white border border-emerald-200 px-4 py-3 text-center shadow-sm">
+      <p className="text-[11px] text-slate-500 uppercase tracking-wider mb-1">
+        {label}
+      </p>
+      <p className="text-base font-semibold text-slate-900">
+        {val != null ? `${val} ${unit}` : "-"}
+      </p>
+    </div>
+  );
 }
 
 export default function PackagedPanel() {
   const [q, setQ] = useState("");
-  
-  // Backend sekarang mengembalikan 1 object "best match", bukan array
-  const [item, setItem] = useState(null); 
-  
+  const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
@@ -35,9 +32,7 @@ export default function PackagedPanel() {
     setItem(null);
 
     try {
-      // Fungsi ini sekarang return object data tunggal (atau null) dari Spoonacular
       const res = await searchProductsOFF(q);
-      
       if (!res) {
         setErr("Produk tidak ditemukan di database Spoonacular.");
       } else {
@@ -50,137 +45,154 @@ export default function PackagedPanel() {
     }
   }
 
-  // Helper untuk render hasil
   const renderItem = () => {
     if (!item) return null;
 
-    // Ambil data analisis dari backend
     const analysis = item.analysis || {};
     const tone = analysis.badge_color || "gray";
     const label = analysis.label || "Check Result";
-    
+
     return (
-      <div className="rounded-2xl border border-line-200 bg-surface-100 p-5 flex flex-col gap-4 animate-fade-in">
-        {/* Header: Gambar, Nama, Brand */}
-        <div className="flex items-start justify-between gap-3">
+      <div className="rounded-3xl border border-emerald-200 bg-[#F5FBEF] p-6 space-y-5">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
           <div className="flex gap-4">
-              {item.image ? (
-                  <img 
-                    src={item.image} 
-                    alt={item.name} 
-                    className="w-16 h-16 object-contain bg-white rounded-lg border border-line-200 p-1" 
-                  />
-              ) : (
-                <div className="w-16 h-16 bg-surface-200 rounded-lg flex items-center justify-center text-xs text-ink-400">
-                   No Img
-                </div>
-              )}
-              
-              <div>
-                  <h3 className="font-bold text-ink-900 text-lg leading-tight">{item.name}</h3>
-                  {item.brand && (
-                    <p className="text-sm text-ink-900 font-medium">{item.brand}</p>
-                  )}
-                  {/* Tampilkan Notes jika ada */}
-                  {analysis.notes && analysis.notes.length > 0 && (
-                      <ul className="mt-2 space-y-1">
-                        {analysis.notes.map((note, idx) => (
-                           <li key={idx} className="text-xs text-ink-900 flex items-start gap-1">
-                             <span className="text-brand-600">•</span> {note}
-                           </li>
-                        ))}
-                      </ul>
-                  )}
+            {item.image ? (
+              <img
+                src={item.image}
+                alt={item.name}
+                className="w-16 h-16 rounded-xl bg-white border border-emerald-200 object-contain p-1"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-xl bg-white border flex items-center justify-center text-xs text-slate-400">
+                No Img
               </div>
+            )}
+
+            <div>
+              <h3 className="font-semibold text-lg text-slate-900">
+                {item.name}
+              </h3>
+              {item.brand && (
+                <p className="text-sm text-slate-600">{item.brand}</p>
+              )}
+
+              {analysis.notes?.length > 0 && (
+                <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                  {analysis.notes.map((n, i) => (
+                    <li key={i}>• {n}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
-          
-          {/* Badge Status Diabetes */}
-          <div className="flex-shrink-0">
-             <Badge tone={tone} size="lg">{label}</Badge>
-          </div>
+
+          <Badge tone={tone}>{label}</Badge>
         </div>
 
-        {/* Grid Nutrisi */}
-        <div className="grid grid-cols-4 gap-2">
-          {/* Perhatikan nama key sekarang ada suffix _g atau _mg */}
+        {/* Nutrisi utama */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <NutrientBox label="Carbs" val={item.carbs_g} unit="g" />
           <NutrientBox label="Sugar" val={item.sugar_g} unit="g" />
           <NutrientBox label="Fiber" val={item.fiber_g} unit="g" />
           <NutrientBox label="Sodium" val={item.sodium_mg} unit="mg" />
         </div>
 
-        {/* Info Tambahan */}
-        <div className="text-[11px] text-ink-900 text-center flex justify-center gap-4 border-t border-line-200 pt-2 mt-1">
-            <span>Fat: {item.fat_g}g</span>
-            <span>Sat. Fat: {item.saturated_fat_g}g</span>
-            <span>Protein: {item.protein_g}g</span>
+        {/* Info tambahan */}
+        <div className="pt-3 border-t flex justify-center gap-6 text-sm text-slate-700">
+          <span>Fat: {item.fat_g}g</span>
+          <span>Sat. Fat: {item.saturated_fat_g}g</span>
+          <span>Protein: {item.protein_g}g</span>
         </div>
       </div>
     );
   };
 
   return (
-    <Card className="p-5">
-      <div className="grid gap-4 lg:grid-cols-[2fr,1fr] items-start">
-        <div>
-          <Label htmlFor="q" className="text-ink-900">
-            Cari Produk Kemasan (Branded)
-          </Label>
-          <div className="mt-1 flex gap-2">
-            <Input
-              id="q"
-              placeholder="Ex: Oreo, Indomie, Coca Cola, Snickers"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <Button type="button" variant="soft" onClick={handleSearch}>
-              Cek
-            </Button>
-          </div>
-          <p className="mt-2 text-[11px] text-ink-900">
-            Powered by <span className="font-semibold">Spoonacular</span>. Masukkan nama merek spesifik untuk hasil terbaik.
-          </p>
-        </div>
+    <Card className="p-6 bg-[#F5FBEF] border border-emerald-200">
+      {/* SEARCH BAR */}
+      <Label className="text-slate-900">
+        Cari Produk Kemasan (Branded)
+      </Label>
 
-        {/* Legend / Info Box */}
-        <div className="rounded-2xl bg-surface-100 border border-line-200 p-3 text-sm">
-          <p className="font-semibold text-ink-900 mb-1 text-xs uppercase tracking-wide">
-            Indikator Diabetes
-          </p>
-          <ul className="pl-0 space-y-1.5 text-xs">
-            <li className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                <span className="text-ink-700">Ramah Diabetes</span>
-            </li>
-            <li className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-                <span className="text-ink-700">Boleh (Kontrol Porsi)</span>
-            </li>
-            <li className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                <span className="text-ink-700">Kurang Ideal / Tinggi Gula</span>
-            </li>
-          </ul>
-        </div>
+      <div className="mt-2 flex gap-3">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          placeholder="Ex: Oreo, Indomie, Coca Cola, Snickers"
+          className="
+            w-full
+            px-5 py-3
+            rounded-full
+            bg-white
+            border border-emerald-500
+            text-slate-900
+            placeholder:text-slate-400
+            focus:outline-none
+            focus:ring-4
+            focus:ring-emerald-200
+          "
+        />
+
+        <button
+          onClick={handleSearch}
+          className="
+            shrink-0
+            rounded-full
+            bg-emerald-700
+            px-6
+            py-3
+            font-semibold
+            text-white
+            hover:bg-emerald-800
+            transition
+          "
+        >
+          Cek
+        </button>
       </div>
 
+      <p className="mt-2 text-xs text-slate-600">
+        Powered by <b>Spoonacular</b>. Masukkan nama merek spesifik.
+      </p>
+
+      {/* Legend */}
+      <div className="mt-4 rounded-2xl bg-[#F5FBEF] border border-emerald-200 p-4 text-sm">
+        <p className="font-semibold mb-2 text-slate-600">Indikator Diabetes</p>
+        <ul className="space-y-1">
+          <li className="flex items-center gap-2 text-slate-600">
+            <span className="w-2 h-2 rounded-full bg-green-500" />
+            Ramah Diabetes
+          </li>
+          <li className="flex items-center gap-2 text-slate-600">
+            <span className="w-2 h-2 rounded-full bg-yellow-500" />
+            Boleh (Kontrol Porsi)
+          </li>
+          <li className="flex items-center gap-2 text-slate-600">
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            Kurang Ideal / Tinggi Gula
+          </li>
+        </ul>
+      </div>
+
+      {/* RESULT */}
       <div className="mt-6 min-h-[120px]">
         {loading && (
-          <div className="flex items-center justify-center py-8 text-sm text-ink-800 animate-pulse">
+          <p className="text-center text-sm animate-pulse">
             Menganalisis nutrisi produk...
-          </div>
+          </p>
         )}
-        
-        {err && !loading && (
-          <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-sm text-red-600">
-             {err}
+
+        {err && (
+          <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+            {err}
           </div>
         )}
 
         {!loading && !err && !item && (
-          <div className="text-center py-8 text-sm text-ink-900 border-2 border-dashed border-line-200 rounded-xl">
-             Hasil pencarian produk akan muncul di sini.
+          <div className="text-center text-sm text-slate-600 border-2 border-dashed rounded-xl py-8">
+            Hasil pencarian akan muncul di sini
           </div>
         )}
 

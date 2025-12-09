@@ -1,8 +1,9 @@
 // src/components/home/DailySummary.jsx
 import { useEffect, useMemo, useState } from "react";
-import Card from "../ui/Card";
-import Separator from "../ui/Separator";
+import { Calendar } from "lucide-react";
 import { readLogByDate } from "../../utils/foodLog";
+import { useGoal } from "../../state/GoalContext";
+import { useAuth } from "../../state/AuthContext";
 
 function todayKey() {
   const d = new Date();
@@ -11,100 +12,149 @@ function todayKey() {
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
-function Tile({ label, value }) {
-  return (
-    <div className="rounded-xl bg-surface-100 border border-line-200 px-3 py-2 text-center">
-      <p className="text-sm text-ink-900">{label}</p>
-      <p className="font-semibold text-ink-900">{value}</p>
-    </div>
-  );
-}
-
-export default function DailySummary({
-  dateKey = todayKey(),
-  targetKcal = 2000,
-}) {
+export default function DailySummary({ dateKey = todayKey() }) {
   const [items, setItems] = useState([]);
+  const { targets } = useGoal(); // { calories, carbs, sugar }
+  const { currentUser } = useAuth();
 
+  const userName = currentUser?.name || null;
+
+  // target diambil dari GoalContext → otomatis ikut berubah kalau user ganti
+  const kcalTarget = targets.calories;
+  const carbsTarget = targets.carbs;
+  const sugarTarget = targets.sugar;
+
+  // baca log setiap ganti tanggal ATAU saat komponen mount
   useEffect(() => {
-    setItems(readLogByDate(dateKey));
+    const list = readLogByDate(dateKey);
+    setItems(Array.isArray(list) ? list : []);
   }, [dateKey]);
 
+  // filter log berdasarkan user yang lagi login
+  const userItems = useMemo(() => {
+    if (!userName) return items;
+    // item lama (tanpa username) tetap ikut ditampilkan
+    return items.filter(
+      (it) => !it.username || it.username === userName
+    );
+  }, [items, userName]);
+
   const totals = useMemo(() => {
-    return items.reduce(
+    return userItems.reduce(
       (acc, it) => {
-        // dukung dua bentuk:
-        // 1) it.nutr = { kcal, protein, fat, carb, sugar }
-        // 2) it.{ kcal?, protein?, fat?, carbs, sugar }
         const m = it.nutr || {};
 
-        const carb =
-          Number(m.carb ?? it.carb ?? it.carbs ?? 0) || 0;
-        const sugar =
-          Number(m.sugar ?? it.sugar ?? 0) || 0;
-        const protein =
-          Number(m.protein ?? it.protein ?? 0) || 0;
-        const fat =
-          Number(m.fat ?? it.fat ?? 0) || 0;
+        const carb = Number(m.carb ?? it.carb ?? it.carbs ?? 0) || 0;
+        const sugar = Number(m.sugar ?? it.sugar ?? 0) || 0;
+        const protein = Number(m.protein ?? it.protein ?? 0) || 0;
+        const fat = Number(m.fat ?? it.fat ?? 0) || 0;
+        const fiber = Number(m.fiber ?? it.fiber ?? 0) || 0;
 
-        // jika sudah ada kcal, pakai; kalau tidak, hitung dari makro
-        const kcalFromMacros =
-          carb * 4 + protein * 4 + fat * 9;
-        const kcal =
-          Number(m.kcal ?? it.kcal ?? kcalFromMacros) || 0;
+        const kcalFromMacros = carb * 4 + protein * 4 + fat * 9;
+        const kcal = Number(m.kcal ?? it.kcal ?? kcalFromMacros) || 0;
 
         acc.kcal += kcal;
         acc.protein += protein;
         acc.fat += fat;
         acc.carb += carb;
         acc.sugar += sugar;
+        acc.fiber += fiber;
         return acc;
       },
-      { kcal: 0, protein: 0, fat: 0, carb: 0, sugar: 0 }
+      { kcal: 0, protein: 0, fat: 0, carb: 0, sugar: 0, fiber: 0 }
     );
-  }, [items]);
+  }, [userItems]);
 
-  const pct = Math.min(
+  const rounded = {
+    kcal: Math.round(totals.kcal),
+    carb: Math.round(totals.carb),
+    sugar: Math.round(totals.sugar),
+    fiber: Math.round(totals.fiber),
+  };
+
+  const pctCal = Math.min(
     100,
-    targetKcal > 0
-      ? Math.round((totals.kcal / targetKcal) * 100)
-      : 0
+    kcalTarget > 0 ? (rounded.kcal / kcalTarget) * 100 : 0
+  );
+  const pctCarb = Math.min(
+    100,
+    carbsTarget > 0 ? (rounded.carb / carbsTarget) * 100 : 0
+  );
+  const pctSugar = Math.min(
+    100,
+    sugarTarget > 0 ? (rounded.sugar / sugarTarget) * 100 : 0
   );
 
   return (
-    <Card className="p-5">
-      <p className="text-lg font-semibold text-ink-900">
-        Daily Calorie Summary
-      </p>
-      <p className="text-xs text-ink-700">Tanggal: {dateKey}</p>
-
-      <div className="mt-3">
-        <div className="h-2 w-full rounded-full bg-surface-100 border border-line-200">
-          <div
-            className="h-2 rounded-full bg-accent-600"
-            style={{ width: `${pct}%` }}
-          />
+    <div className="rounded-2xl bg-white px-8 py-6 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-50">
+          <Calendar className="w-4 h-4 text-emerald-600" />
         </div>
-        <div className="mt-1 text-xs text-ink-700">
-          {totals.kcal.toFixed(0)}/{targetKcal} kcal • {pct}%
-        </div>
+        <h3 className="text-sm font-semibold text-slate-900">
+          Daily Summary
+        </h3>
       </div>
 
-      <Separator className="my-4" />
+      {/* 4 kolom: Calories, Carbs, Sugar, Fiber */}
+      <div className="grid grid-cols-4 gap-8 text-sm items-end">
+        {/* Calories */}
+        <div>
+          <p className="text-xs text-slate-500 mb-1">Calories</p>
+          <p className="text-[22px] font-bold text-emerald-700 leading-tight">
+            {rounded.kcal}
+          </p>
+          <p className="text-xs text-slate-400 mb-2">/ {kcalTarget}</p>
+          <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-emerald-500"
+              style={{ width: `${pctCal}%` }}
+            />
+          </div>
+        </div>
 
-      <div className="grid grid-cols-5 gap-3 text-sm">
-        <Tile label="Kcal" value={totals.kcal.toFixed(0)} />
-        <Tile
-          label="Protein"
-          value={`${totals.protein.toFixed(1)} g`}
-        />
-        <Tile label="Fat" value={`${totals.fat.toFixed(1)} g`} />
-        <Tile label="Carb" value={`${totals.carb.toFixed(1)} g`} />
-        <Tile
-          label="Sugar"
-          value={`${totals.sugar.toFixed(1)} g`}
-        />
+        {/* Carbs */}
+        <div>
+          <p className="text-xs text-slate-500 mb-1">Carbs</p>
+          <p className="text-[22px] font-bold text-emerald-700 leading-tight">
+            {rounded.carb}
+            <span className="text-sm font-normal">g</span>
+          </p>
+          <p className="text-xs text-slate-400 mb-2">/ {carbsTarget}g</p>
+          <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-emerald-500"
+              style={{ width: `${pctCarb}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Sugar */}
+        <div>
+          <p className="text-xs text-slate-500 mb-1">Sugar</p>
+          <p className="text-[22px] font-bold text-slate-900 leading-tight">
+            {rounded.sugar}
+            <span className="text-sm font-normal">g</span>
+          </p>
+          <p className="text-xs text-slate-400 mb-2">/ {sugarTarget}g</p>
+          <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-yellow-400"
+              style={{ width: `${pctSugar}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Fiber */}
+        <div>
+          <p className="text-xs text-slate-500 mb-1">Fiber</p>
+          <p className="text-[22px] font-bold text-emerald-700 leading-tight">
+            {rounded.fiber}g
+          </p>
+          <p className="text-xs text-slate-400 mt-2">Good hydration</p>
+        </div>
       </div>
-    </Card>
+    </div>
   );
 }

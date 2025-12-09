@@ -7,22 +7,21 @@ export default function RecipeModal({ open, onClose, recipe }) {
 
   const r = recipe;
 
-  // Makro – pakai fallback yang lebih aman
+  // ===== MACROS (sesuai permintaan) =====
   const kcal = r.kcal ?? r.calories ?? "-";
-  // BUG FIX: utamakan r.carbs, baru r.carb
   const carbs = r.carbs ?? r.carb ?? "-";
   const sugar = r.sugar ?? "-";
-  const protein = r.protein ?? "-";
-  const fat = r.fat ?? "-";
+  const fiber = r.fiber ?? "-";
+  const sodium = r.sodium ?? r.sodium_mg ?? "-";
 
-  // Ingredients – ambil dari beberapa kemungkinan field
+  // Ingredients
   const ingredients =
     r.ingredients ??
     r.raw?.ingredients ??
     r.raw?.extendedIngredients?.map((i) => i.original || i.name) ??
     [];
 
-  // Instructions – ambil dari beberapa kemungkinan field
+  // Instructions
   const steps =
     r.steps ??
     r.raw?.steps ??
@@ -31,84 +30,86 @@ export default function RecipeModal({ open, onClose, recipe }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto px-4 py-8">
-        <Card className="relative p-6 sm:p-7 bg-surface-100 text-ink-900">
-          {/* Tombol X */}
+      <div className="w-full max-w-4xl px-4">
+        {/* BACKGROUND PUTIH */}
+        <Card className="relative rounded-3xl bg-white p-8 text-slate-900">
+          
+          {/* Close */}
           <button
-            type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 text-ink-700 hover:text-ink-900"
-            aria-label="Tutup"
+            className="absolute right-5 top-5 text-slate-500 hover:text-slate-800"
           >
             ✕
           </button>
 
-          {/* Judul & info singkat */}
-          <h2 className="text-2xl sm:text-3xl font-semibold text-ink-900">
-            {r.title}
-          </h2>
-          <p className="mt-1 text-sm text-ink-800">
-            Cook: {r.cookTime ?? r.cookMin ?? "-"} min • Porsi:{" "}
-            {r.servings ?? "-"}
+          {/* Title */}
+          <h2 className="text-3xl font-semibold">{r.title}</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Cook: {r.cookTime ?? "-"} min • Porsi: {r.servings ?? "-"}
           </p>
 
-          {/* Makro */}
-          <div className="mt-4 grid gap-3 sm:grid-cols-5">
+          {/* ===== MACRO BOXES ===== */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-5">
             <Macro label="Kcal" value={kcal} />
             <Macro label="Carbs" value={`${carbs} g`} />
             <Macro label="Sugar" value={`${sugar} g`} />
-            <Macro label="Protein" value={`${protein} g`} />
-            <Macro label="Fat" value={`${fat} g`} />
+            <Macro label="Fiber" value={`${fiber} g`} />
+            <Macro label="Sodium" value={`${sodium} mg`} />
           </div>
 
-          {/* Ingredients & Instructions */}
-          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          {/* Content */}
+          <div className="mt-8 grid gap-8 sm:grid-cols-2">
+            {/* Ingredients */}
             <section>
-              <h3 className="font-medium text-ink-900">Ingredients</h3>
+              <h3 className="text-lg font-semibold mb-2">Ingredients</h3>
               {ingredients.length === 0 ? (
-                <p className="mt-2 text-sm text-ink-800">
-                  Tidak ada data bahan.
-                </p>
+                <p className="text-sm text-slate-500">No ingredients data.</p>
               ) : (
-                <ul className="mt-2 list-disc list-inside text-sm space-y-1">
-                  {ingredients.map((item, idx) => (
-                    <li key={idx} className="text-ink-900">
-                      {item}
-                    </li>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  {ingredients.map((item, i) => (
+                    <li key={i}>{item}</li>
                   ))}
                 </ul>
               )}
             </section>
 
+            {/* Instructions */}
             <section>
-              <h3 className="font-medium text-ink-900">Instructions</h3>
+              <h3 className="text-lg font-semibold mb-2">Instructions</h3>
               {steps.length === 0 ? (
-                <p className="mt-2 text-sm text-ink-800">
-                  Tidak ada instruksi yang tercatat.
-                </p>
+                <p className="text-sm text-slate-500">No instructions available.</p>
               ) : (
-                <ol className="mt-2 list-decimal list-inside text-sm space-y-2">
-                  {steps.map((step, idx) => (
-                    <li key={idx} className="text-ink-900">
-                      {step}
-                    </li>
+                <ol className="list-decimal list-inside space-y-2 text-sm">
+                  {steps.map((step, i) => (
+                    <li key={i}>{step}</li>
                   ))}
                 </ol>
               )}
             </section>
           </div>
 
-          {/* Catatan (opsional) */}
-          {r.notes && (
-            <p className="mt-4 text-sm text-ink-800">
-              <b>Notes:</b> {r.notes}
-            </p>
-          )}
-
+          {/* Footer */}
           <div className="mt-6 flex justify-end">
-            <Button variant="soft" type="button" onClick={onClose}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="
+                rounded-xl
+                border border-emerald-500
+                bg-white
+                px-6 py-2.5
+                text-sm font-medium
+                text-emerald-700
+                transition
+                hover:bg-emerald-600
+                hover:text-white
+                focus:outline-none
+                focus:ring-2
+                focus:ring-emerald-500/40
+              "
+            >
               Tutup
-            </Button>
+            </button>
           </div>
         </Card>
       </div>
@@ -116,11 +117,12 @@ export default function RecipeModal({ open, onClose, recipe }) {
   );
 }
 
+/* ===== Macro Box ===== */
 function Macro({ label, value }) {
   return (
-    <div className="rounded-xl border border-line-200 bg-surface-50 p-3 text-center">
-      <p className="text-xs text-ink-700">{label}</p>
-      <p className="text-lg font-semibold text-ink-900">{value}</p>
+    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-5 text-center shadow-sm">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="mt-1 text-xl font-semibold text-slate-900">{value}</p>
     </div>
   );
 }
