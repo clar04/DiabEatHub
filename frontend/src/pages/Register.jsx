@@ -1,6 +1,7 @@
 // src/pages/Register.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { LogIn } from "lucide-react";
 
 import Card from "../components/ui/Card";
 import Label from "../components/ui/Label";
@@ -9,14 +10,12 @@ import Button from "../components/ui/Button";
 
 import { useAuth } from "../state/AuthContext";
 import { useProfile } from "../state/ProfileContext";
-
-// Pakai helper server-side yang memang memanggil /api/register
 import { authRegister } from "../utils/api";
 
 export default function Register() {
   const navigate = useNavigate();
-  const { login } = useAuth();          // sekarang TIDAK dipakai, tapi boleh dibiarkan
-  const { setProfile } = useProfile();  // juga tidak dipakai di flow baru
+  const { login } = useAuth();         // masih boleh ada walau belum dipakai
+  const { setProfile } = useProfile(); // sama seperti di login
 
   const [form, setForm] = useState({
     username: "",
@@ -36,7 +35,6 @@ export default function Register() {
     const username = form.username.trim();
     const { password, confirm } = form;
 
-    // Validasi FE — kalau gagal, tidak akan ada network request (ini normal)
     if (!username || !password || !confirm) {
       alert("Semua field wajib diisi.");
       return;
@@ -53,11 +51,11 @@ export default function Register() {
     try {
       setLoading(true);
 
-      // Register ke backend (TANPA auto-login)
       await authRegister(username, password);
 
-      // Beri info lalu arahkan ke halaman login
-      alert("Registrasi berhasil! Sekarang login dengan username & password yang baru.");
+      alert(
+        "Registrasi berhasil! Sekarang login dengan username & password yang baru."
+      );
       navigate("/login", { replace: true });
     } catch (err) {
       console.error("[REGISTER] failed:", err);
@@ -68,25 +66,34 @@ export default function Register() {
   };
 
   return (
-    <section className="mx-auto max-w-lg px-4 py-10 sm:py-14">
-      <Card className="p-6 sm:p-7">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-ink-900">
-          Daftar Akun
-        </h1>
+    // ⬇️ BEDA DI SINI: tidak pakai min-h-screen & items-center lagi
+    <section className="flex justify-center px-4 pt-16 pb-16">
+      <Card className="w-full max-w-lg rounded-3xl bg-white p-8 shadow-xl">
+        {/* HEADER – sama style dengan login */}
+        <div className="flex items-start gap-3">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+            <LogIn className="w-5 h-5" />
+          </span>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">
+              Daftar Akun
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Buat akun sederhana untuk menyimpan pengaturan dan data profil di
+              browser kamu.
+            </p>
+          </div>
+        </div>
 
-        <p className="mt-2 text-sm text-ink-700">
-          Buat akun sederhana untuk menyimpan pengaturan dan data profil di
-          browser kamu.
-        </p>
-
+        {/* FORM */}
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <Label htmlFor="username" className="text-ink-900">
+            <Label htmlFor="username" className="text-slate-900">
               Username
             </Label>
             <Input
               id="username"
-              className="mt-1 text-ink-900 placeholder:text-ink-600"
+              className="mt-1 text-slate-900 placeholder:text-slate-400 bg-white border border-slate-200 rounded-xl h-11"
               placeholder="mis. ethan123"
               value={form.username}
               onChange={handleChange("username")}
@@ -95,13 +102,13 @@ export default function Register() {
           </div>
 
           <div>
-            <Label htmlFor="password" className="text-ink-900">
+            <Label htmlFor="password" className="text-slate-900">
               Password
             </Label>
             <Input
               id="password"
               type="password"
-              className="mt-1 text-ink-900 placeholder:text-ink-600"
+              className="mt-1 text-slate-900 placeholder:text-slate-400 bg-white border border-slate-200 rounded-xl h-11"
               placeholder="minimal 6 karakter"
               value={form.password}
               onChange={handleChange("password")}
@@ -110,13 +117,14 @@ export default function Register() {
           </div>
 
           <div>
-            <Label htmlFor="confirm" className="text-ink-900">
+            <Label htmlFor="confirm" className="text-slate-900">
               Konfirmasi Password
             </Label>
             <Input
               id="confirm"
               type="password"
-              className="mt-1 text-ink-900 placeholder:text-ink-600"
+              className="mt-1 text-slate-900 placeholder:text-slate-400 bg-white border border-slate-200 rounded-xl h-11"
+              placeholder="ulang password"
               value={form.confirm}
               onChange={handleChange("confirm")}
               required
@@ -126,17 +134,16 @@ export default function Register() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full"
+            className="mt-2 w-full rounded-full"
           >
             {loading ? "Mendaftar..." : "Daftar"}
           </Button>
 
-          <p className="mt-3 text-xs text-ink-700">
+          <p className="mt-4 text-xs sm:text-sm text-slate-600 text-center">
             Sudah punya akun?{" "}
-            <Link to="/login" className="underline">
-              Login di sini
+            <Link to="/login" className="font-medium text-emerald-700">
+              Login di sini.
             </Link>
-            .
           </p>
         </form>
       </Card>

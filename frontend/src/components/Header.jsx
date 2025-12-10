@@ -1,6 +1,7 @@
 // src/components/Header.jsx
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../state/AuthContext";
+import logo from "../assets/logo.png"; // ✅ import logo
 
 export default function Header() {
   const { currentUser, logout } = useAuth();
@@ -10,7 +11,6 @@ export default function Header() {
     try {
       await logout();
     } finally {
-      // setelah logout balik ke landing page
       window.location.href = "/";
     }
   };
@@ -21,12 +21,20 @@ export default function Header() {
   return (
     <header className="border-b border-white/10 bg-[#275a4f] text-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:py-4">
-        {/* Brand */}
-        <Link to="/" className="text-lg font-semibold tracking-tight">
-          Meal Planner
+        
+        {/* ✅ BRAND + LOGO */}
+        <Link
+          to="/"
+          className="flex items-center gap-3 text-xl font-semibold tracking-tight"
+        >
+          <img
+            src={logo}
+            alt="Logo"
+            className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover bg-white"
+          />
+          <span>Meal Planner</span>
         </Link>
-
-        {/* Nav links (desktop) */}
+        {/* Nav links */}
         <nav className="hidden items-center gap-4 sm:flex">
           <NavLink
             to="/home"
@@ -62,26 +70,23 @@ export default function Header() {
           </NavLink>
         </nav>
 
-        {/* Auth buttons */}
+        {/* Auth button */}
         <div className="flex items-center gap-3">
           {currentUser ? (
-            <>
-              <span className="hidden text-sm sm:inline">
-                Hi, <span className="font-semibold">{currentUser.name}</span>
-              </span>
-
-            </>
+            <span className="hidden text-sm sm:inline">
+              Hi, <span className="font-semibold">{currentUser.name}</span>
+            </span>
           ) : location.pathname === "/login" ? (
             <Link
               to="/register"
-              className="rounded-full bg-[#00796b] px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#006158] transition-colors"
+              className="rounded-full bg-[#00796b] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#006158]"
             >
               Register
             </Link>
           ) : (
             <Link
               to="/login"
-              className="rounded-full bg-[#00796b] px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#006158] transition-colors"
+              className="rounded-full bg-[#00796b] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#006158]"
             >
               Sign In
             </Link>
