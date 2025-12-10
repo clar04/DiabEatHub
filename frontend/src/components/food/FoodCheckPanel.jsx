@@ -203,7 +203,7 @@ export default function FoodCheckPanel({ onAddSuccess }) {
       </div>
 
       {/* RESULT AREA */}
-      <div className="mt-6 min-h-[80px]">
+      <div className="mt-4 min-h-[80px]">
         {loading && (
           <div className="flex items-center justify-center py-8 text-sm text-slate-600">
             <span className="animate-pulse">
@@ -229,7 +229,7 @@ export default function FoodCheckPanel({ onAddSuccess }) {
       </div>
 
       {/* TIP BAR DI BAGIAN PALING BAWAH */}
-      <div className="mt-8 rounded-2xl bg-emerald-50 border border-emerald-100 px-4 py-3 text-sm text-slate-800 flex items-start gap-2">
+      <div className="rounded-2xl bg-emerald-50 border border-emerald-100 px-4 py-3 text-sm text-slate-800 flex items-start gap-2">
         <span className="text-lg">💡</span>
         <p>
           <span className="font-semibold">Tip:</span> Try foods like{" "}

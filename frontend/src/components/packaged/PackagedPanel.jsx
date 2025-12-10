@@ -179,7 +179,7 @@ export default function PackagedPanel() {
       {/* RESULT */}
       <div className="mt-6 min-h-[120px]">
         {loading && (
-          <p className="text-center text-sm animate-pulse">
+          <p className="text-center text-black text-sm animate-pulse">
             Menganalisis nutrisi produk...
           </p>
         )}

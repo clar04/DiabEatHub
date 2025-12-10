@@ -121,7 +121,7 @@ export default function Login() {
           <Button
             type="submit"
             disabled={loading}
-            className="mt-4 w-full h-11 rounded-full bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full"
           >
             {loading ? "Signing in..." : "Sign In"}
           </Button>

@@ -17,23 +17,24 @@ export default function Recipes() {
   const [err, setErr] = useState("");
   const [selected, setSelected] = useState(null);
 
-  // --- LOAD DATA DARI BACKEND (SPOONACULAR WRAPPER) ---
+  // --- LOAD DATA DARI BACKEND (LARAVEL SPOONACULAR WRAPPER) ---
   async function loadRecipes() {
     setLoading(true);
     setErr("");
     setRecipes([]);
 
     try {
-      // param bisa kamu sesuaikan dengan kebutuhan backend
+      // param disesuaikan dengan backend-mu
       const items = await getDiabetesRecipes({
-        goal: settings.goal,           // misal: "weight_loss" / "maintain" / "gain"
-        activity: settings.activity,   // "sedentary" / "light" / "moderate" / ...
+        goal: settings.goal,
+        activity: settings.activity,
         sex: profile?.sex,
         age: profile?.age,
         height: profile?.height,
         weight: profile?.weight,
       });
 
+      // backend balikin { success, items: [...] }
       setRecipes(Array.isArray(items) ? items : []);
     } catch (e) {
       setErr(e.message || "Gagal mengambil data resep dari server.");
@@ -42,7 +43,7 @@ export default function Recipes() {
     }
   }
 
-  // auto load saat goal/activity berubah atau pertama kali buka tab Recipes
+  // auto load saat goal / activity berubah atau pertama kali buka tab Recipes
   useEffect(() => {
     loadRecipes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,37 +96,61 @@ export default function Recipes() {
         </div>
       )}
 
-      {/* LIST KARTU RESEP (DATA DARI BACKEND) */}
+      {/* LIST KARTU RESEP */}
       {!loading && !err && recipes.length > 0 && (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {recipes.map((r) => {
-            // backend sudah normalisasi, tapi tetap kasih fallback aman
-            const kcal = r.kcal ?? r.calories ?? "-";
-            const carbs = r.carbs ?? r.carb ?? "-";
-            const sugar = r.sugar ?? "-";
-            const fiber = r.fiber ?? "-";
-            const sodium = r.sodium ?? r.sodium_mg ?? "-";
+            // ====== MAPPING KE FIELD JSON BACKEND ======
+            // JSON: name, calories, carbs_g, sugar_g, fiber_g, fat_g, saturated_fat_g, sodium_mg
+            const title = r.name || r.title || "Untitled recipe";
+
+            const kcal =
+              r.calories ??
+              r.kcal ??
+              (typeof r.calories === "number" ? r.calories : "-");
+
+            const carbs =
+              r.carbs_g ??
+              r.carb ??
+              r.carbs ??
+              (typeof r.carbs_g === "number" ? r.carbs_g : "-");
+
+            const sugar =
+              r.sugar_g ??
+              r.sugar ??
+              (typeof r.sugar_g === "number" ? r.sugar_g : "-");
+
+            const fiber =
+              r.fiber_g ??
+              r.fiber ??
+              (typeof r.fiber_g === "number" ? r.fiber_g : "-");
+
+            const sodium =
+              r.sodium_mg ??
+              r.sodium ??
+              (typeof r.sodium_mg === "number" ? r.sodium_mg : "-");
 
             const friendly =
-              r.analysis?.label &&
-              /friendly|ramah/i.test(r.analysis.label);
+              r.diabetes_friendly === true ||
+              r.analysis?.badge_color === "green" ||
+              /ramah|friendly/i.test(r.analysis?.label || "");
 
             return (
               <button
-                key={r.id ?? r.title}
+                key={r.id ?? title}
                 type="button"
                 onClick={() => setSelected(r)}
                 className="w-full text-left rounded-3xl bg-[#E6F5EC] border border-emerald-100 p-5 hover:shadow-md hover:border-emerald-300 transition"
               >
-                {/* Title + status */}
+                {/* Title + badge */}
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h3 className="text-base font-semibold text-slate-900">
-                      {r.title}
+                      {title}
                     </h3>
-                    {r.subtitle && (
-                      <p className="mt-1 text-xs text-slate-600 line-clamp-2">
-                        {r.subtitle}
+                    {r.analysis?.label && (
+                      <p className="mt-1 text-xs text-slate-600">
+                        {r.analysis.label}
                       </p>
                     )}
                   </div>
@@ -138,22 +163,37 @@ export default function Recipes() {
                   )}
                 </div>
 
-                {/* CARD KALORI PUTIH DI DALAM */}
+                {/* CARD KALORI PUTIH */}
                 <div className="mt-4 rounded-2xl bg-white border border-emerald-100 px-4 py-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs font-medium text-slate-600">
-                        Calories
+                        Calories & Nutrients
                       </p>
                       <p className="mt-1 text-xs text-slate-700">
-                        Carbs: <span className="font-semibold">{carbs} g</span>
+                        Carbs:{" "}
+                        <span className="font-semibold">
+                          {carbs}
+                          {carbs === "-" ? "" : " g"}
+                        </span>
                         <br />
-                        Fiber: <span className="font-semibold">{fiber} g</span>
+                        Fiber:{" "}
+                        <span className="font-semibold">
+                          {fiber}
+                          {fiber === "-" ? "" : " g"}
+                        </span>
                         <br />
-                        Sugar: <span className="font-semibold">{sugar} g</span>
+                        Sugar:{" "}
+                        <span className="font-semibold">
+                          {sugar}
+                          {sugar === "-" ? "" : " g"}
+                        </span>
                         <br />
                         Sodium:{" "}
-                        <span className="font-semibold">{sodium} mg</span>
+                        <span className="font-semibold">
+                          {sodium}
+                          {sodium === "-" ? "" : " mg"}
+                        </span>
                       </p>
                     </div>
                     <div className="text-right">
@@ -165,20 +205,6 @@ export default function Recipes() {
                     </div>
                   </div>
                 </div>
-
-                {/* Includes singkat (kalau backend kirimkan) */}
-                {Array.isArray(r.includes) && r.includes.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-xs font-semibold text-slate-700">
-                      Includes:
-                    </p>
-                    <ul className="mt-1 text-xs text-slate-700 space-y-0.5">
-                      {r.includes.slice(0, 3).map((line, idx) => (
-                        <li key={idx}>• {line}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
 
                 {/* See more */}
                 <div className="mt-4 pt-3 border-t border-emerald-200 flex justify-center">
@@ -192,7 +218,7 @@ export default function Recipes() {
         </div>
       )}
 
-      {/* MODAL DETAIL – data yang dikirim apa adanya dari list (backend sudah normalisasi) */}
+      {/* MODAL DETAIL */}
       <RecipeModal
         open={!!selected}
         onClose={() => setSelected(null)}

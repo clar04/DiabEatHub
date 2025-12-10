@@ -1,8 +1,9 @@
+// src/pages/History.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Calendar, Activity } from "lucide-react";
+
 import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
-import Button from "../components/ui/Button";
 import { readLogByDate } from "../utils/foodLog";
 import { useGoal } from "../state/GoalContext";
 
@@ -61,8 +62,8 @@ function getDayStatus(dayTotals, targets) {
   if (!targets) return { label: "On Track", tone: "green" };
 
   const exceeded =
-    dayTotals.kcal > targets.calories ||
-    dayTotals.carb > targets.carbs ||
+    dayTotals.calories > targets.calories ||
+    dayTotals.carbs > targets.carbs ||
     dayTotals.sugar > targets.sugar;
 
   if (exceeded) return { label: "Exceeded", tone: "red" };
@@ -160,206 +161,209 @@ export default function History() {
     .sort((a, b) => b.date - a.date);
 
   return (
-    <section className="space-y-6">
-      {/* HEADER */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-            <Calendar className="w-4 h-4" />
-          </span>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">
-              Eating History
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Weekly overview of your calories, carbs, sugar, and fiber.
-            </p>
-          </div>
-        </div>
-
-        {/* Range toggle */}
-        <div className="inline-flex rounded-full bg-slate-100 p-1 text-xs sm:text-sm">
-          {["week", "month", "all"].map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setRange(key)}
-              className={`px-3 py-1 rounded-full font-medium transition ${
-                range === key
-                  ? "bg-emerald-700 text-white"
-                  : "text-slate-700 hover:bg-white"
-              }`}
-            >
-              {key === "week"
-                ? "Week"
-                : key === "month"
-                ? "Month"
-                : "All"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* TOP SUMMARY CARDS */}
-      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
-        <StatCard
-          title="Avg Calories"
-          value={summary.avgCalories}
-          subtitle="per day"
-        />
-        <StatCard
-          title="Avg Carbs"
-          value={`${summary.avgCarbs}g`}
-          subtitle="per day"
-        />
-        <StatCard
-          title="Avg Sugar"
-          value={`${summary.avgSugar}g`}
-          subtitle="per day"
-        />
-        <StatCard
-          title="Avg Fiber"
-          value={`${summary.avgFiber}g`}
-          subtitle="per day"
-        />
-        <StatCard
-          title="Days Exceeded"
-          value={summary.daysExceeded}
-          subtitle={`out of ${summary.totalDays}`}
-        />
-        <StatCard
-          title="Adherence Rate"
-          value={`${summary.adherence}%`}
-          subtitle="on track"
-        />
-      </div>
-
-      {/* WEEKLY TRENDS CARD */}
-      <Card className="mt-2 border-0 bg-[#ECF7F0]">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-              <Activity className="w-4 h-4" />
+    <section className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+      {/* WRAPPER PUTIH BESAR */}
+      <div className="bg-white rounded-2xl shadow-lg px-5 py-6 sm:px-8 sm:py-7 space-y-6">
+        {/* HEADER */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+              <Calendar className="w-4 h-4" />
             </span>
-            <h2 className="text-sm sm:text-base font-semibold text-slate-900">
-              Weekly Trends
-            </h2>
-          </div>
-        </div>
-
-        <div className="mt-4 overflow-x-auto">
-          <div className="flex items-end gap-4 min-h-[180px] px-2">
-            {days.map((d) => {
-              const calHeight = (d.totals.calories / maxCalories) * 100;
-              const carbHeight =
-                ((d.totals.carbs * 4) / maxCarbKcal) * 100 || 0;
-
-              return (
-                <div
-                  key={d.key}
-                  className="flex flex-col items-center justify-end gap-2 text-xs"
-                >
-                  <div className="flex h-40 w-10 items-end gap-1">
-                    {/* Calories bar (light) */}
-                    <div
-                      className="flex-1 rounded-t-md bg-emerald-300"
-                      style={{ height: `${calHeight}%` }}
-                    />
-                    {/* Carbs bar (dark) */}
-                    <div
-                      className="flex-1 rounded-t-md bg-slate-900"
-                      style={{ height: `${carbHeight}%` }}
-                    />
-                  </div>
-                  <span className="text-[11px] text-slate-700">
-                    {d.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* legend */}
-          <div className="mt-3 flex items-center gap-4 text-[11px] text-slate-700 px-2 pb-1">
-            <div className="flex items-center gap-1">
-              <span className="inline-block h-2 w-4 rounded-full bg-emerald-300" />
-              <span>Calories</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="inline-block h-2 w-4 rounded-full bg-slate-900" />
-              <span>Carbs</span>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">
+                Eating History
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500">
+                Weekly overview of your calories, carbs, sugar, and fiber.
+              </p>
             </div>
           </div>
-        </div>
-      </Card>
 
-      {/* RECENT LOGS */}
-      <div className="mt-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm sm:text-base font-semibold text-slate-900">
-            Recent Logs
-          </h2>
-        </div>
-
-        {recentLogs.length === 0 ? (
-          <Card className="p-4">
-            <p className="text-sm text-slate-600">
-              Belum ada log harian. Coba gunakan fitur{" "}
-              <span className="font-semibold">Add to Log</span> di tab
-              Food Check terlebih dulu.
-            </p>
-          </Card>
-        ) : (
-          <div className="space-y-2">
-            {recentLogs.map((d) => (
-              <Card
-                key={d.key}
-                className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-3 bg-white rounded-2xl"
+          {/* Range toggle */}
+          <div className="inline-flex rounded-full bg-slate-100 p-1 text-xs sm:text-sm">
+            {["week", "month", "all"].map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setRange(key)}
+                className={`px-3 py-1 rounded-full font-medium transition ${
+                  range === key
+                    ? "bg-emerald-700 text-white"
+                    : "text-slate-700 hover:bg-white"
+                }`}
               >
-                <div className="space-y-1">
-                  <p className="text-xs text-slate-500">
-                    {d.date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
-                  <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-slate-700">
-                    <div>
-                      <p className="text-slate-500">Calories</p>
-                      <p className="font-semibold text-slate-900">
-                        {d.totals.calories}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">Carbs</p>
-                      <p className="font-semibold text-slate-900">
-                        {d.totals.carbs}g
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">Sugar</p>
-                      <p className="font-semibold text-slate-900">
-                        {d.totals.sugar}g
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">Fiber</p>
-                      <p className="font-semibold text-slate-900">
-                        {d.totals.fiber}g
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-3 sm:mt-0 sm:self-center">
-                  <Badge tone={d.status.tone} size="lg">
-                    {d.status.label}
-                  </Badge>
-                </div>
-              </Card>
+                {key === "week"
+                  ? "Week"
+                  : key === "month"
+                  ? "Month"
+                  : "All"}
+              </button>
             ))}
           </div>
-        )}
+        </div>
+
+        {/* TOP SUMMARY CARDS */}
+        <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+          <StatCard
+            title="Avg Calories"
+            value={summary.avgCalories}
+            subtitle="per day"
+          />
+          <StatCard
+            title="Avg Carbs"
+            value={`${summary.avgCarbs}g`}
+            subtitle="per day"
+          />
+          <StatCard
+            title="Avg Sugar"
+            value={`${summary.avgSugar}g`}
+            subtitle="per day"
+          />
+          <StatCard
+            title="Avg Fiber"
+            value={`${summary.avgFiber}g`}
+            subtitle="per day"
+          />
+          <StatCard
+            title="Days Exceeded"
+            value={summary.daysExceeded}
+            subtitle={`out of ${summary.totalDays}`}
+          />
+          <StatCard
+            title="Adherence Rate"
+            value={`${summary.adherence}%`}
+            subtitle="on track"
+          />
+        </div>
+
+        {/* WEEKLY TRENDS CARD */}
+        <Card className="mt-2 border-0 bg-[#ECF7F0]">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                <Activity className="w-4 h-4" />
+              </span>
+              <h2 className="text-sm sm:text-base font-semibold text-slate-900">
+                Weekly Trends
+              </h2>
+            </div>
+          </div>
+
+          <div className="mt-4 overflow-x-auto">
+            <div className="flex items-end gap-4 min-h-[180px] px-2">
+              {days.map((d) => {
+                const calHeight = (d.totals.calories / maxCalories) * 100;
+                const carbHeight =
+                  ((d.totals.carbs * 4) / maxCarbKcal) * 100 || 0;
+
+                return (
+                  <div
+                    key={d.key}
+                    className="flex flex-col items-center justify-end gap-2 text-xs"
+                  >
+                    <div className="flex h-40 w-10 items-end gap-1">
+                      {/* Calories bar (light) */}
+                      <div
+                        className="flex-1 rounded-t-md bg-emerald-300"
+                        style={{ height: `${calHeight}%` }}
+                      />
+                      {/* Carbs bar (dark) */}
+                      <div
+                        className="flex-1 rounded-t-md bg-slate-900"
+                        style={{ height: `${carbHeight}%` }}
+                      />
+                    </div>
+                    <span className="text-[11px] text-slate-700">
+                      {d.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* legend */}
+            <div className="mt-3 flex items-center gap-4 text-[11px] text-slate-700 px-2 pb-1">
+              <div className="flex items-center gap-1">
+                <span className="inline-block h-2 w-4 rounded-full bg-emerald-300" />
+                <span>Calories</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="inline-block h-2 w-4 rounded-full bg-slate-900" />
+                <span>Carbs</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* RECENT LOGS */}
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm sm:text-base font-semibold text-slate-900">
+              Recent Logs
+            </h2>
+          </div>
+
+          {recentLogs.length === 0 ? (
+            <Card className="p-4 bg-[#ECF7F0] border-0 rounded-2xl">
+              <p className="text-sm text-slate-700">
+                Belum ada log harian. Coba gunakan fitur{" "}
+                <span className="font-semibold">Add to Log</span> di tab Food
+                Check terlebih dulu.
+              </p>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {recentLogs.map((d) => (
+                <Card
+                  key={d.key}
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-3 bg-white rounded-2xl"
+                >
+                  <div className="space-y-1">
+                    <p className="text-xs text-slate-500">
+                      {d.date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
+                    <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-slate-700">
+                      <div>
+                        <p className="text-slate-500">Calories</p>
+                        <p className="font-semibold text-slate-900">
+                          {d.totals.calories}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">Carbs</p>
+                        <p className="font-semibold text-slate-900">
+                          {d.totals.carbs}g
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">Sugar</p>
+                        <p className="font-semibold text-slate-900">
+                          {d.totals.sugar}g
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">Fiber</p>
+                        <p className="font-semibold text-slate-900">
+                          {d.totals.fiber}g
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 sm:mt-0 sm:self-center">
+                    <Badge tone={d.status.tone} size="lg">
+                      {d.status.label}
+                    </Badge>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -369,7 +373,7 @@ export default function History() {
 
 function StatCard({ title, value, subtitle }) {
   return (
-    <Card className="border-0 bg-[#E8F5EC] px-4 py-3 rounded-2xl">
+    <Card className="border-0 bg-[#ECF7F0] px-4 py-3 rounded-2xl">
       <p className="text-[11px] text-slate-600 mb-1">{title}</p>
       <p className="text-lg font-semibold text-slate-900">{value}</p>
       <p className="text-[11px] text-slate-500 mt-1">{subtitle}</p>

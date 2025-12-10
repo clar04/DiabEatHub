@@ -125,7 +125,6 @@ export async function authRegister(username, password) {
     method: "POST",
     body: { username, password },
   });
-  if (data?.token) setAuthToken(data.token);
   return data;
 }
 

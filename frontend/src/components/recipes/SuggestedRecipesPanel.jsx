@@ -1,4 +1,6 @@
+// src/components/recipes/SuggestedRecipesPanel.jsx
 import { useEffect, useMemo, useState } from "react";
+
 import Card from "../ui/Card";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
@@ -6,6 +8,7 @@ import RecipeModal from "./RecipeModal";
 import { getDiabetesRecipes, getRecipeDetail } from "../../utils/api";
 import { pushRecipeHistory } from "../../utils/recipeHistory";
 
+// --- helper flag dari macros (gram) ---
 function flagFromMacros(carbs, sugar) {
   if (sugar > 15 || carbs > 50) return "red";
   if (sugar > 10 || carbs > 35) return "yellow";
@@ -18,11 +21,59 @@ function flagTone(flag) {
   return "green";
 }
 
+// --- normalisasi object recipe dari backend ---
+function normalizeRecipe(raw) {
+  if (!raw) return null;
+
+  const kcal = raw.kcal ?? raw.calories ?? 0;
+
+  const carbs =
+    raw.carbs ??
+    raw.carb ??
+    raw.carbs_g ??
+    raw.carb_g ??
+    (typeof raw.carbs_g === "number" ? raw.carbs_g : 0);
+
+  const sugar =
+    raw.sugar ??
+    raw.sugar_g ??
+    (typeof raw.sugar_g === "number" ? raw.sugar_g : 0);
+
+  const fiber =
+    raw.fiber ??
+    raw.fiber_g ??
+    (typeof raw.fiber_g === "number" ? raw.fiber_g : 0);
+
+  const sodium =
+    raw.sodium ??
+    raw.sodium_mg ??
+    raw.sodiumMg ??
+    (typeof raw.sodium_mg === "number" ? raw.sodium_mg : 0);
+
+  const title = raw.title || raw.name || "Recipe";
+
+  const cookTime = raw.cookTime ?? raw.ready_in_min ?? raw.readyInMinutes ?? 0;
+
+  const servings = raw.servings ?? raw.serving ?? null;
+
+  return {
+    ...raw,
+    id: raw.id,
+    title,
+    kcal,
+    carbs,
+    sugar,
+    fiber,
+    sodium,
+    cookTime,
+    servings,
+  };
+}
+
 export default function SuggestedRecipesPanel() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-
   const [q, setQ] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -30,19 +81,21 @@ export default function SuggestedRecipesPanel() {
   const [modalLoading, setModalLoading] = useState(false);
   const [modalErr, setModalErr] = useState("");
 
-  // load list dari Spoonacular
+  // load list dari backend
   useEffect(() => {
     async function load() {
       setLoading(true);
       setErr("");
       try {
         const list = await getDiabetesRecipes();
-        // kasih flag di sini
-        const withFlag = list.map((r) => ({
-          ...r,
-          flag: flagFromMacros(r.carbs, r.sugar),
-        }));
-        setRecipes(withFlag);
+        const normalized = Array.isArray(list)
+          ? list.map((raw) => {
+              const n = normalizeRecipe(raw);
+              const flag = flagFromMacros(n.carbs, n.sugar);
+              return { ...n, flag };
+            })
+          : [];
+        setRecipes(normalized);
       } catch (e) {
         setErr(e.message || "Gagal memuat resep dari Spoonacular.");
       } finally {
@@ -55,10 +108,8 @@ export default function SuggestedRecipesPanel() {
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return recipes;
-    return recipes.filter(
-      (r) =>
-        r.title.toLowerCase().includes(s) ||
-        (r.image || "").toLowerCase().includes(s)
+    return recipes.filter((r) =>
+      (r.title || "").toLowerCase().includes(s)
     );
   }, [q, recipes]);
 
@@ -69,12 +120,13 @@ export default function SuggestedRecipesPanel() {
     setModalRecipe(null);
 
     try {
-      const detail = await getRecipeDetail(r.id);
+      const detailRaw = await getRecipeDetail(r.id);
+      const detail = normalizeRecipe(detailRaw);
       const flag = flagFromMacros(detail.carbs, detail.sugar);
       const full = { ...detail, flag };
 
       setModalRecipe(full);
-      pushRecipeHistory(full); // simpan ke history lokal
+      pushRecipeHistory(full);
     } catch (e) {
       setModalErr(e.message || "Gagal memuat detail resep.");
     } finally {
@@ -102,11 +154,17 @@ export default function SuggestedRecipesPanel() {
               className="mt-1 w-full rounded-xl border border-line-200 bg-surface-100 px-3 py-2 text-sm text-ink-900 placeholder:text-ink-600 focus:outline-none focus:ring-4 focus:ring-brand-100 focus:border-brand-500"
             />
             <p className="mt-2 text-xs text-ink-700">
-              Data diambil dari <span className="font-semibold">Spoonacular</span>,
-              difilter ke gaya low carb / diabetes-friendly.
+              Data diambil dari{" "}
+              <span className="font-semibold">Spoonacular</span>, difilter ke
+              gaya low carb / diabetes-friendly.
             </p>
           </div>
-          <Button type="button" variant="soft" className="mt-1" onClick={() => {}}>
+          <Button
+            type="button"
+            variant="soft"
+            className="mt-1"
+            onClick={() => {}}
+          >
             Tampilkan
           </Button>
         </div>
@@ -117,6 +175,7 @@ export default function SuggestedRecipesPanel() {
               Mengambil resep dari Spoonacular…
             </p>
           )}
+
           {err && !loading && (
             <p className="text-sm text-red-600">Error: {err}</p>
           )}
@@ -127,6 +186,7 @@ export default function SuggestedRecipesPanel() {
             </p>
           )}
 
+          {/* LIST RESEP */}
           <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filtered.map((r) => (
               <article
@@ -137,7 +197,7 @@ export default function SuggestedRecipesPanel() {
                   <div>
                     <h3 className="font-semibold text-ink-900">{r.title}</h3>
                     <p className="text-xs text-ink-700">
-                      Cook: {r.cookTime} min
+                      Cook: {r.cookTime ?? "-"} min
                     </p>
                   </div>
                   <Badge tone={flagTone(r.flag)}>
@@ -184,6 +244,7 @@ export default function SuggestedRecipesPanel() {
         </div>
       </Card>
 
+      {/* MODAL DETAIL */}
       <RecipeModal
         open={modalOpen}
         onClose={closeDetail}

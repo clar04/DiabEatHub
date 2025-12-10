@@ -14,6 +14,7 @@ import MealPlan from "./MealPlan";
 import ProfilePage from "./Profile";
 import History from "./History";
 import About from "./About";
+import { Target } from "lucide-react";
 
 // Daily summary card
 import DailySummary from "../components/home/DailySummary";
@@ -75,7 +76,7 @@ export default function Home() {
         <div className="mt-8 bg-white rounded-2xl p-6 flex items-center justify-between shadow">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-xl">
-              🎯
+              <Target className="w-6 h-6 text-emerald-700" />
             </div>
 
             <div>
@@ -114,8 +115,8 @@ export default function Home() {
       <div className="space-y-3">
         {/* Peringatan isi profil – text saja, tanpa card kuning */}
         {!profileOk && (
-          <p className="text-l text-white-900 font-semibold">
-            Lengkapi data di tab <span className="font-bold ">Profile</span>{" "}
+          <p className="text-xl text-white-900">
+            Lengkapi data di tab <span className="font-semibold">Profile</span>{" "}
             (tinggi badan, berat badan, usia, aktivitas) supaya target kalori,
             carbs, dan sugar lebih akurat.
           </p>
@@ -128,15 +129,12 @@ export default function Home() {
       {/* =============== MAIN PANEL (TABS) =============== */}
       <div className="bg-white rounded-3xl p-8 shadow">
         {/* Tabs */}
-        <div className="flex gap-6 border-b text-sm">
+        <div className=" flex justify-center flex gap-20 border-b text-sm" >
           {[
             ["food", "Food Check"],
             ["recipes", "Recipes"],
             ["packaged", "Packaged Product"],
             ["mealplan", "Meal Plan"],
-            ["profile", "Profile"],
-            ["history", "History"],
-            ["about", "About"],
           ].map(([key, label]) => (
             <button
               key={key}
@@ -154,14 +152,11 @@ export default function Home() {
         </div>
 
         {/* Tab content */}
-        <div className="mt-6">
+        <div className="mt-4">
           {activeTab === "food" && <Food />}
           {activeTab === "recipes" && <Recipes />}
           {activeTab === "packaged" && <Packaged />}
           {activeTab === "mealplan" && <MealPlan />}
-          {activeTab === "profile" && <ProfilePage />}
-          {activeTab === "history" && <History />}
-          {activeTab === "about" && <About />}
         </div>
       </div>
     </section>
