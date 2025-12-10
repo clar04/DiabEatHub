@@ -24,28 +24,17 @@ class RecipeController extends Controller
      */
     public function diabetes(Request $request)
     {
-        // bisa dikirim dari FE, default 30
         $maxCarbs = (int) $request->query('maxCarbs', 30);
-
-        // ambil list resep ringkas dari service
         $recipes = $this->spoonacular->diabetesRecipes($maxCarbs);
-
-        // jalankan rule ke tiap item
         $evaluated = array_map(function (array $recipe) {
-            // simpan dulu data mentahnya
             $raw = $recipe['raw'] ?? null;
             unset($recipe['raw']);
-
-            // jalankan rules diabetes ke versi ringkas
             $withRule = $this->rules->evaluate($recipe);
-
-            // kembalikan raw supaya FE bisa tampilkan detail
             $withRule['raw'] = $raw;
 
-            // kasih boolean biar FE gampang
-            $withRule['diabetes_friendly'] = $withRule['diabetes_flag'] === 'OK';
+            $category = $withRule['analysis']['category']??'';
+            $withRule['diabetes_friendly'] = ($category === 'diabetes_friendly');
 
-            // kalau ready_in_min kosong tapi di raw ada, pakai yang raw
             if (empty($withRule['ready_in_min']) && isset($raw['readyInMinutes'])) {
                 $withRule['ready_in_min'] = $raw['readyInMinutes'];
             }
@@ -108,4 +97,73 @@ class RecipeController extends Controller
             ],
         ]);
     }
+
+    /**
+     * GET /api/recipes/search?q=keyword
+     * Cari resep umum dan tetap evaluasi skor diabetesnya
+     */
+    public function search(Request $request)
+    {
+        $request->validate([
+            'q' => 'required|string|min:2',
+        ]);
+
+        $query = $request->query('q');
+
+        // 1. Panggil service baru yang kita buat di atas
+        $recipes = $this->spoonacular->searchRecipes($query);
+
+        // 2. Evaluasi setiap resep dengan rules diabetes
+        $evaluated = array_map(function (array $recipe) {
+            $raw = $recipe['raw'] ?? null;
+            unset($recipe['raw']);
+
+            // Evaluasi nutrisi
+            $withRule = $this->rules->evaluate($recipe);
+            
+            // Kembalikan data raw & set flag frontend
+            $withRule['raw'] = $raw;
+            
+            // Perbaikan bug: Cek category 'diabetes_friendly'
+            $category = $withRule['analysis']['category'] ?? '';
+            $withRule['diabetes_friendly'] = ($category === 'diabetes_friendly');
+
+            // Fallback waktu masak
+            if (empty($withRule['ready_in_min']) && isset($raw['readyInMinutes'])) {
+                $withRule['ready_in_min'] = $raw['readyInMinutes'];
+            }
+
+            return $withRule;
+        }, $recipes);
+
+        return response()->json([
+            'success' => true,
+            'items' => $evaluated,
+        ]);
+    }
+    
+public function generate(Request $request)
+{
+    $request->validate([
+        'target' => 'required|numeric|min:1000|max:5000', // Target kalori
+        'diet' => 'nullable|string' 
+    ]);
+
+    $target = (int) $request->input('target');
+    $diet = $request->input('diet', '');
+
+    $plan = $this->spoonacular->generateMealPlan($target, $diet);
+
+    if (!$plan) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to generate meal plan from Spoonacular.'
+        ], 502);
+    }
+
+    return response()->json([
+        'success' => true,
+        'data' => $plan
+    ]);
+}
 }
