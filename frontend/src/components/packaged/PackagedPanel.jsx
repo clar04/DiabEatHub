@@ -109,7 +109,7 @@ export default function PackagedPanel() {
   };
 
   return (
-    <Card className="p-6 bg-[#F5FBEF] border border-emerald-200">
+    <Card className="p-6 bg-emerald-50 border border-emerald-100">
       {/* SEARCH BAR */}
       <Label className="text-slate-900">
         Cari Produk Kemasan (Branded)
@@ -158,7 +158,7 @@ export default function PackagedPanel() {
       </p>
 
       {/* Legend */}
-      <div className="mt-4 rounded-2xl bg-[#F5FBEF] border border-emerald-200 p-4 text-sm">
+      <div className="mt-4 rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-sm">
         <p className="font-semibold mb-2 text-slate-600">Indikator Diabetes</p>
         <ul className="space-y-1">
           <li className="flex items-center gap-2 text-slate-600">
