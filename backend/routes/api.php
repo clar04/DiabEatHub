@@ -29,3 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/diary',        [FoodLogController::class, 'store']);
     Route::delete('/diary/{id}', [FoodLogController::class, 'destroy']);
 });
+
+Route::get('/test', function () {
+    return 'Vercel Laravel is Alive!';
+});
