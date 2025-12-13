@@ -19,19 +19,6 @@ class RecipeController extends Controller
         $this->rules = $rules;
     }
 
-    public function diabetes(Request $request)
-    {
-        Log::info('Start fetching diabetes recipes...'); // Log awal
-
-        $maxCarbs = (int) $request->query('maxCarbs', 30);
-        
-        try {
-            $recipes = $this->spoonacular->diabetesRecipes($maxCarbs);
-            Log::info('Fetched from Spoonacular, count: ' . count($recipes)); // Log setelah fetch
-        } catch (\Exception $e) {
-            Log::error('Spoonacular Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to fetch recipes'], 500);
-        }
 
     /**
      * GET /api/recipes/diabetes
