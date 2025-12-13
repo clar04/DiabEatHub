@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use App\Services\SpoonacularService;
-use App\Services\DiabetesRuleService;
+use App\services\SpoonacularService;
+use App\services\DiabetesRuleService;
 use Illuminate\Support\Facades\Log;
 
 class RecipeController extends Controller

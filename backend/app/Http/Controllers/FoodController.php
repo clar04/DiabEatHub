@@ -2,8 +2,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\SpoonacularService; // Ubah import service
-use App\Services\DiabetesRuleService;
+use App\services\SpoonacularService; // Ubah import service
+use App\services\DiabetesRuleService;
 use App\Models\FoodCheck;
 
 class FoodController extends Controller
