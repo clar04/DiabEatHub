@@ -118,7 +118,7 @@ class SpoonacularService
         $data = $this->get('recipes/complexSearch', [
             'addRecipeNutrition' => true,
             'maxCarbs' => $maxCarbs,
-            'number' => 10,
+            'number' => 6,
         ]);
 
         $results = $data['results'] ?? [];
