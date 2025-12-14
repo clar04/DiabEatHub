@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useProfile } from "../state/ProfileContext";
 import { useGoal } from "../state/GoalContext";
 import { mifflinStJeor, adjustCalories } from "../utils/calorieCalc";
-import { toDateKey } from "../utils/foodLog";
+import { toDateKey } from "../utils/FoodLog";
 import { isProfileReady } from "../utils/ensureProfile";
 
 // Page tabs
