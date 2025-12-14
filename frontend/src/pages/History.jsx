@@ -4,7 +4,7 @@ import { Calendar, Activity } from "lucide-react";
 
 import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
-import { readLogByDate } from "../utils/foodLog";
+import { readLogByDate } from "../utils/FoodLog";
 import { useGoal } from "../state/GoalContext";
 
 // ---- helper tanggal ----

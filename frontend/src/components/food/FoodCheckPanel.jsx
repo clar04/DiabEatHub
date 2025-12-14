@@ -4,7 +4,7 @@ import { CheckCircle2, AlertCircle } from "lucide-react";
 
 import Input from "../ui/Input";
 import Badge from "../ui/Badge";
-import { addToLog, toDateKey } from "../../utils/foodLog";
+import { addToLog, toDateKey } from "../../utils/FoodLog";
 import { checkFood } from "../../utils/api";
 
 export default function FoodCheckPanel({ onAddSuccess }) {
