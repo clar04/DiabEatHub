@@ -17,7 +17,7 @@ export default function Login() {
   const { login } = useAuth();
   const { setProfile } = useProfile();
 
-  const [form, setForm] = useState({ username: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
   const handleChange = (key) => (e) =>
@@ -26,24 +26,24 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const username = form.username.trim();
+    const email = form.email.trim();
     const password = form.password;
 
-    if (!username || !password) {
-      alert("Isi username dan password dulu ya.");
+    if (!email || !password) {
+      alert("Isi email dan password dulu ya.");
       return;
     }
 
     try {
       setLoading(true);
 
-      const data = await authLogin(username, password);
+      const data = await authLogin(email, password);
       login(data.user, data.token);
 
       try {
         const me = await authMe();
         setProfile({
-          username: me?.user?.name ?? data.user.name,
+          email: me?.user?.name ?? data.user.name,
           sex: "female",
           age: null,
           height: null,
@@ -51,7 +51,7 @@ export default function Login() {
         });
       } catch {
         setProfile({
-          username: data.user.name,
+          email: data.user.name,
           sex: "female",
           age: null,
           height: null,
@@ -89,15 +89,15 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="username" className="text-slate-900">
-              Username
+            <Label htmlFor="email" className="text-slate-900">
+              Email
             </Label>
             <Input
-              id="username"
+              id="email"
               className="mt-1 text-slate-900 placeholder:text-slate-400 bg-white border border-slate-200 rounded-xl h-11"
               placeholder="mis. ethan123"
-              value={form.username}
-              onChange={handleChange("username")}
+              value={form.email}
+              onChange={handleChange("email")}
               required
             />
           </div>

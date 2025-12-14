@@ -10,7 +10,7 @@ const USER_KEY = "smc_auth_current_user_v1";
 
 /**
  * Helper parse user dari localStorage:
- * - dukung format lama (string username)
+ * - dukung format lama (string email)
  * - dukung format baru (JSON { id?, name })
  */
 function readStoredUser() {
@@ -21,11 +21,11 @@ function readStoredUser() {
   // format baru (JSON)
   try {
     const obj = JSON.parse(raw);
-    if (obj && (obj.name || obj.username)) {
-      return { id: obj.id ?? null, name: obj.name ?? obj.username };
+    if (obj && (obj.name || obj.email)) {
+      return { id: obj.id ?? null, name: obj.name ?? obj.email };
     }
   } catch (_) {
-    // format lama (string username)
+    // format lama (string email)
     return { id: null, name: raw };
   }
   // fallback: treat as plain string
@@ -89,7 +89,7 @@ export function AuthProvider({ children }) {
    */
   const login = (user, token) => {
     if (token) setAuthToken(token);
-    // dukung pemanggilan lama: login("username")
+    // dukung pemanggilan lama: login("email")
     if (typeof user === "string") {
       setCurrentUser({ id: null, name: user });
     } else {

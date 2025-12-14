@@ -18,13 +18,13 @@ function writeUsers(map) {
 }
 
 // Register user baru
-export function registerUser(username, password) {
+export function registerUser(email, password) {
   const users = readUsers();
-  if (users[username]) {
-    return { ok: false, error: "Username sudah dipakai, pilih yang lain ya." };
+  if (users[email]) {
+    return { ok: false, error: "email sudah dipakai, pilih yang lain ya." };
   }
-  users[username] = {
-    username,
+  users[email] = {
+    email,
     password,
   };
   writeUsers(users);
@@ -32,10 +32,10 @@ export function registerUser(username, password) {
 }
 
 // Verifikasi login
-export function verifyUser(username, password) {
+export function verifyUser(email, password) {
   const users = readUsers();
-  const u = users[username];
-  if (!u) return { ok: false, error: "Username tidak ditemukan." };
+  const u = users[email];
+  if (!u) return { ok: false, error: "email tidak ditemukan." };
   if (u.password !== password) {
     return { ok: false, error: "Password salah." };
   }

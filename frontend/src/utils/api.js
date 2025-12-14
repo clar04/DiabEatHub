@@ -7,10 +7,11 @@ const DEFAULT_TIMEOUT_MS = 20000; // 20s
 // ==========================
 // BASE URL API BACKEND
 // ==========================
+// Pastikan port sesuai dengan tempat Backend Next.js kamu berjalan (biasanya 3001 jika frontend 3000)
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_BASE ||
-  "http://127.0.0.1:8000/api";
+  "http://localhost:3001/api";
 
 console.log("API_BASE =", API_BASE);
 
@@ -120,18 +121,18 @@ export async function apiFetch(path, options = {}) {
 // AUTH: register / login / me
 // =============================
 
-export async function authRegister(username, password) {
+export async function authRegister(email, password) {
   const data = await apiFetch("/register", {
     method: "POST",
-    body: { username, password },
+    body: { email, password },
   });
   return data;
 }
 
-export async function authLogin(username, password) {
+export async function authLogin(email, password) {
   const data = await apiFetch("/login", {
     method: "POST",
-    body: { username, password },
+    body: { email, password },
   });
   if (data?.token) setAuthToken(data.token);
   return data;
@@ -150,31 +151,22 @@ export async function authLogout() {
 }
 
 // =============================
-// FOOD CHECK (Sekarang Unified Spoonacular)
+// FOOD CHECK (Untuk Natural Language / Input Manual)
 // =============================
 
-// GET /food/check?q=...
-// Return: Single Object (karena backend mencari best match ingredient)
 export async function checkFood(query) {
   const json = await apiFetch(`/food/check?q=${encodeURIComponent(query)}`, {
     method: "GET",
   });
-
-  // Backend sekarang mengembalikan { success: true, data: { ... } }
-  // Kita kembalikan langsung object datanya
+  // Pastikan ambil data yang benar sesuai respon backend kamu
   return json?.data || null;
 }
 
-// GET /history/food
 export async function getFoodHistory() {
   const json = await apiFetch("/history/food", { method: "GET" });
-
-  // Backend returns { success: true, data: [...] }
-  // Kita map agar kompatibel dengan FoodCheckPanel history list
   const list = json?.data || json?.items || [];
 
   return list.map((h) => {
-    // result adalah JSON yang disimpan di DB (struktur baru dengan analysis)
     const r = h.result || {};
     const analysis = r.analysis || {};
 
@@ -182,45 +174,37 @@ export async function getFoodHistory() {
       id: h.id,
       query: h.query,
       createdAt: h.created_at,
-
-      // Mapping untuk list UI
       name: r.name,
       unit: "1 serving",
       carbs: r.carbs_g,
       sugar: r.sugar_g,
-      diabetesFlag: analysis.label, // Ambil label dari analysis
-
-      // Simpan raw result untuk detail jika perlu
+      diabetesFlag: analysis.label,
       result: r,
     };
   });
 }
 
 // =============================
-// PRODUCT CHECK (Sekarang Spoonacular Products)
+// PRODUCT SEARCH (YANG DIPERBAIKI)
 // =============================
 
-// GET /products/search?q=...
-// Return: Single Object
-export async function searchProductsOFF(keyword) {
-  // Note: Nama fungsi saya biarkan searchProductsOFF agar tidak error di import lain, 
-  // tapi logicnya sudah pakai endpoint Spoonacular baru.
-
+// Saya rename jadi searchProducts agar lebih clean (sesuaikan import di komponen kamu jika perlu)
+// Atau biarkan searchProductsOFF jika malas ubah import
+export async function searchProducts(keyword) {
   const json = await apiFetch(
     `/products/search?q=${encodeURIComponent(keyword)}`,
     { method: "GET" }
   );
 
-  // Backend mengembalikan { success: true, data: { ... } }
-  return json?.data || null;
+  // PERBAIKAN: Ambil .items karena backend mengembalikan { success: true, items: [...] }
+  // Dan return default [] agar map di frontend tidak error
+  return json?.items || [];
 }
 
-
 // =============================
-// RECIPES (Spoonacular wrapper)
+// RECIPES
 // =============================
 
-// GET /recipes/diabetes
 export async function getDiabetesRecipes(params = {}) {
   const qs = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
@@ -231,23 +215,15 @@ export async function getDiabetesRecipes(params = {}) {
     method: "GET",
   });
 
-  // Backend list resep masih mengembalikan array di 'items'
   if (!json?.success || !Array.isArray(json.items)) return [];
-
-  // Pass-through items karena Controller sudah menormalisasi data
   return json.items;
 }
 
-// GET /recipes/{id}
 export async function getRecipeDetail(id) {
   const json = await apiFetch(`/recipes/${id}`, { method: "GET" });
 
   if (!json?.success || !json.item) {
     throw new Error("Recipe not found");
   }
-
-  // Backend mengembalikan struktur:
-  // { success: true, item: { diabetes: {...evaluated_data}, raw: {...spoonacular_raw} } }
-  // Kita kembalikan full object 'item' agar Frontend bisa akses item.diabetes.analysis
   return json;
 }

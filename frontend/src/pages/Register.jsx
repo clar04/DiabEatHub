@@ -18,7 +18,7 @@ export default function Register() {
   const { setProfile } = useProfile(); // sama seperti di login
 
   const [form, setForm] = useState({
-    username: "",
+    email: "",
     password: "",
     confirm: "",
   });
@@ -32,10 +32,10 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const username = form.username.trim();
+    const email = form.email.trim();
     const { password, confirm } = form;
 
-    if (!username || !password || !confirm) {
+    if (!email || !password || !confirm) {
       alert("Semua field wajib diisi.");
       return;
     }
@@ -51,10 +51,10 @@ export default function Register() {
     try {
       setLoading(true);
 
-      await authRegister(username, password);
+      await authRegister(email, password);
 
       alert(
-        "Registrasi berhasil! Sekarang login dengan username & password yang baru."
+        "Registrasi berhasil! Sekarang login dengan email & password yang baru."
       );
       navigate("/login", { replace: true });
     } catch (err) {
@@ -88,15 +88,15 @@ export default function Register() {
         {/* FORM */}
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <Label htmlFor="username" className="text-slate-900">
-              Username
+            <Label htmlFor="email" className="text-slate-900">
+              Email
             </Label>
             <Input
-              id="username"
+              id="email"
               className="mt-1 text-slate-900 placeholder:text-slate-400 bg-white border border-slate-200 rounded-xl h-11"
               placeholder="mis. ethan123"
-              value={form.username}
-              onChange={handleChange("username")}
+              value={form.email}
+              onChange={handleChange("email")}
               required
             />
           </div>

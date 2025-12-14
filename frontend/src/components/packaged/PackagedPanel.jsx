@@ -1,27 +1,12 @@
 import { useState } from "react";
 import Card from "../ui/Card";
 import Label from "../ui/Label";
-import Input from "../ui/Input";
-import Badge from "../ui/Badge";
-import { searchProductsOFF } from "../../utils/api";
-
-/* ================= Nutrient Box ================= */
-function NutrientBox({ label, val, unit }) {
-  return (
-    <div className="rounded-2xl bg-white border border-emerald-200 px-4 py-3 text-center shadow-sm">
-      <p className="text-[11px] text-slate-500 uppercase tracking-wider mb-1">
-        {label}
-      </p>
-      <p className="text-base font-semibold text-slate-900">
-        {val != null ? `${val} ${unit}` : "-"}
-      </p>
-    </div>
-  );
-}
+import { searchProducts } from "../../utils/api"; // Pastikan import ini benar
 
 export default function PackagedPanel() {
   const [q, setQ] = useState("");
-  const [item, setItem] = useState(null);
+  // Ubah state item (single) menjadi items (array)
+  const [items, setItems] = useState([]); 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
@@ -29,14 +14,16 @@ export default function PackagedPanel() {
     if (!q.trim()) return;
     setLoading(true);
     setErr("");
-    setItem(null);
+    setItems([]); // Reset hasil sebelumnya
 
     try {
-      const res = await searchProductsOFF(q);
-      if (!res) {
-        setErr("Produk tidak ditemukan di database Spoonacular.");
+      // searchProducts sekarang mengembalikan array items sesuai perbaikan api.js
+      const res = await searchProducts(q);
+      
+      if (!res || res.length === 0) {
+        setErr("Produk tidak ditemukan.");
       } else {
-        setItem(res);
+        setItems(res);
       }
     } catch (e) {
       setErr(e.message || "Gagal mengambil data produk.");
@@ -44,69 +31,6 @@ export default function PackagedPanel() {
       setLoading(false);
     }
   }
-
-  const renderItem = () => {
-    if (!item) return null;
-
-    const analysis = item.analysis || {};
-    const tone = analysis.badge_color || "gray";
-    const label = analysis.label || "Check Result";
-
-    return (
-      <div className="rounded-3xl border border-emerald-200 bg-[#F5FBEF] p-6 space-y-5">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex gap-4">
-            {item.image ? (
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-16 h-16 rounded-xl bg-white border border-emerald-200 object-contain p-1"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-xl bg-white border flex items-center justify-center text-xs text-slate-400">
-                No Img
-              </div>
-            )}
-
-            <div>
-              <h3 className="font-semibold text-lg text-slate-900">
-                {item.name}
-              </h3>
-              {item.brand && (
-                <p className="text-sm text-slate-600">{item.brand}</p>
-              )}
-
-              {analysis.notes?.length > 0 && (
-                <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                  {analysis.notes.map((n, i) => (
-                    <li key={i}>• {n}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-
-          <Badge tone={tone}>{label}</Badge>
-        </div>
-
-        {/* Nutrisi utama */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <NutrientBox label="Carbs" val={item.carbs_g} unit="g" />
-          <NutrientBox label="Sugar" val={item.sugar_g} unit="g" />
-          <NutrientBox label="Fiber" val={item.fiber_g} unit="g" />
-          <NutrientBox label="Sodium" val={item.sodium_mg} unit="mg" />
-        </div>
-
-        {/* Info tambahan */}
-        <div className="pt-3 border-t flex justify-center gap-6 text-sm text-slate-700">
-          <span>Fat: {item.fat_g}g</span>
-          <span>Sat. Fat: {item.saturated_fat_g}g</span>
-          <span>Protein: {item.protein_g}g</span>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <Card className="p-6 bg-emerald-50 border border-emerald-100">
@@ -120,83 +44,87 @@ export default function PackagedPanel() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          placeholder="Ex: Oreo, Indomie, Coca Cola, Snickers"
+          placeholder="Ex: Oreo, Pepsi, Indomie"
           className="
-            w-full
-            px-5 py-3
-            rounded-full
-            bg-white
-            border border-emerald-500
-            text-slate-900
-            placeholder:text-slate-400
-            focus:outline-none
-            focus:ring-4
-            focus:ring-emerald-200
+            w-full px-5 py-3 rounded-full bg-white border border-emerald-500
+            text-slate-900 placeholder:text-slate-400
+            focus:outline-none focus:ring-4 focus:ring-emerald-200
           "
         />
-
         <button
           onClick={handleSearch}
           className="
-            shrink-0
-            rounded-full
-            bg-emerald-700
-            px-6
-            py-3
-            font-semibold
-            text-white
-            hover:bg-emerald-800
-            transition
+            shrink-0 rounded-full bg-emerald-700 px-6 py-3
+            font-semibold text-white hover:bg-emerald-800 transition
           "
         >
-          Cek
+          {loading ? "..." : "Cari"}
         </button>
       </div>
 
       <p className="mt-2 text-xs text-slate-600">
-        Powered by <b>Spoonacular</b>. Masukkan nama merek spesifik.
+        Menampilkan hasil pencarian dari Spoonacular.
       </p>
 
-      {/* Legend */}
-      <div className="mt-4 rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-sm">
-        <p className="font-semibold mb-2 text-slate-600">Indikator Diabetes</p>
-        <ul className="space-y-1">
-          <li className="flex items-center gap-2 text-slate-600">
-            <span className="w-2 h-2 rounded-full bg-green-500" />
-            Ramah Diabetes
-          </li>
-          <li className="flex items-center gap-2 text-slate-600">
-            <span className="w-2 h-2 rounded-full bg-yellow-500" />
-            Boleh (Kontrol Porsi)
-          </li>
-          <li className="flex items-center gap-2 text-slate-600">
-            <span className="w-2 h-2 rounded-full bg-red-500" />
-            Kurang Ideal / Tinggi Gula
-          </li>
-        </ul>
-      </div>
-
-      {/* RESULT */}
-      <div className="mt-6 min-h-[120px]">
-        {loading && (
-          <p className="text-center text-black text-sm animate-pulse">
-            Menganalisis nutrisi produk...
-          </p>
-        )}
-
+      {/* RESULT AREA */}
+      <div className="mt-6 min-h-[100px]">
+        {/* Error Message */}
         {err && (
-          <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+          <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-600 mb-4">
             {err}
           </div>
         )}
 
-        {!loading && !err && !item && (
-          <div className="text-center text-sm text-slate-600 border-2 border-dashed rounded-xl py-8">
+        {/* Empty State */}
+        {!loading && !err && items.length === 0 && (
+          <div className="text-center text-sm text-slate-500 border-2 border-dashed border-emerald-200 rounded-xl py-8">
             Hasil pencarian akan muncul di sini
           </div>
         )}
 
-        {!loading && !err && item && renderItem()}
+        {/* Loading Skeleton (Simple) */}
+        {loading && (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-20 bg-emerald-100/50 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        )}
+
+        {/* Product List Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {items.map((product) => (
+            <div 
+              key={product.id} 
+              className="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm flex items-start gap-4 hover:shadow-md transition cursor-pointer"
+              // Nanti disini bisa ditambah onClick untuk melihat detail nutrisi
+              onClick={() => console.log("Lihat detail ID:", product.id)} 
+            >
+              {/* Image */}
+              <div className="shrink-0 w-20 h-20 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-center overflow-hidden">
+                {product.image ? (
+                  <img 
+                    src={product.image} 
+                    alt={product.title} 
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <span className="text-xs text-gray-400">No img</span>
+                )}
+              </div>
+
+              {/* Text Content */}
+              <div>
+                <h3 className="font-semibold text-slate-800 text-sm line-clamp-2 leading-snug">
+                  {product.title}
+                </h3>
+                <span className="inline-block mt-2 text-[10px] uppercase tracking-wide text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                  Product
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </Card>
   );
