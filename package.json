@@ -1,0 +1,19 @@
+{
+  "name": "diabeat",
+  "version": "1.0.0",
+  "description": "A diabetes-friendly food & recipe finder that aggregates data from **Nutritionix**, **Spoonacular**, and **Open Food Facts** and turns it into simple, actionable labels: **OK**, **Watch Carbs**, or **High Sugar**.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clar04/SnapNotes.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/clar04/SnapNotes/issues"
+  },
+  "homepage": "https://github.com/clar04/SnapNotes#readme"
+}
