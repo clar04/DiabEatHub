@@ -1,7 +1,7 @@
 // src/components/home/DailySummary.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Calendar } from "lucide-react";
-import { readLogByDate } from "../../utils/foodLog";
+import { readLogByDate } from "../../utils/FoodLog";
 import { useGoal } from "../../state/GoalContext";
 import { useAuth } from "../../state/AuthContext";
 
